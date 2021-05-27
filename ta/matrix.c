@@ -106,45 +106,43 @@ matrix_t* copy_matrix(matrix_t* m) {
 }
 
 // add two matrices together
-matrix_t* add_matrix(matrix_t* m, matrix_t* n) {
-    if (m->rows != n->rows || m->cols != n->rows) {
-        return NULL;
+int add_matrix(matrix_t* m, matrix_t* n, matrix_t* result) {
+    if (!m || !n || !result) {
+        return -1;
     }
 
-    matrix_t* added = create_matrix(m->rows, m->cols);
-    if (!added) {
-        return NULL;
+    if (m->rows != n->rows || m->cols != n->cols || m->cols != result->cols || m->rows != result->rows) {
+        return -1;
     }
 
-    for (int i=0; i<added->rows; ++i) {
-        for (int j=0; j<added->cols; ++j) {
-            added->vals[i][j] = m->vals[i][j] + n->vals[i][j];
+    for (int i=0; i<result->rows; ++i) {
+        for (int j=0; j<result->cols; ++j) {
+            result->vals[i][j] = m->vals[i][j] + n->vals[i][j];
         }
     }
 
-    return added;
+    return 0;
 }
 
 // matrix multiplication m x n
-matrix_t* mult_matrix(matrix_t* m, matrix_t* n) {
-    if (m->cols != n->rows) {
-        return NULL;
+int mult_matrix(matrix_t* m, matrix_t* n, matrix_t* result) {
+    if (!m || !n || !result) {
+        return -1;
     }
 
-    matrix_t* res = create_matrix(m->rows, n->cols);
-    if (!res) {
-        return NULL;
+    if (m->cols != n->rows || m->rows != result->rows || n->cols != result->cols) {
+        return -1;
     }
 
     for (int i = 0; i < m->rows; ++i) {
       for (int j = 0; j < n->cols; ++j) {
          for (int k = 0; k < m->cols; ++k) {
-            res->vals[i][j] += m->vals[i][k] * n->vals[k][j];
+            result->vals[i][j] += m->vals[i][k] * n->vals[k][j];
          }
       }
    }
 
-   return res;
+    return 0;
 }
 
 // transpose matrix 
@@ -179,3 +177,4 @@ int apply_matrix(double (*apply)(double), matrix_t* m){
 
     return 0;
 }
+

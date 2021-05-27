@@ -3,35 +3,41 @@
 
 #include "matrix.h"
 
-typedef matrix_t (*activation_function)(matrix_t);
-typedef matrix_t (*activation_function_d)(matrix_t);
-typedef float (*loss_function)(matrix_t, matrix_t);
-typedef float (*loss_function_d)(matrix_t, matrix_t);
+typedef double (*activation_function)(matrix_t);
+typedef double (*activation_function_d)(matrix_t);
+typedef double (*loss_function)(matrix_t, matrix_t);
+typedef double (*loss_function_d)(matrix_t, matrix_t);
 
 typedef struct layer {
     int prev_neurons;
     int curr_neurons;
 
-    matrix_t weights;
-    matrix_t bias;
+    matrix_t* weights;
+    matrix_t* d_weights;
+    matrix_t* bias;
+    matrix_t* d_bias;
 
+    // partial loading sub-layer within layer
     int loaded_start;
     int loaded_end;
+
+    // needed for backprop
+    matrix_t* inputs;
+    matrix_t* error;
 
 } layer_t;
 
 
 typedef struct network {
     int n_layers;
-    int* n_neurons;
+    layer_t** layers;
 
-    layer_t* layers;
-
+    // partial loading layer within network
     int loaded_start;
     int loaded_end;
 
     // hyperparameters
-    float learning_rate;
+    double learning_rate;
     int batch_size;
 
     // methods
@@ -42,5 +48,8 @@ typedef struct network {
 
 } network_t;
 
+int init_network(void);
+
+void destroy_network(void);
 
 #endif 

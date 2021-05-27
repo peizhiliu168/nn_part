@@ -17,9 +17,9 @@ void destroy_matrix(matrix_t* m);
 
 matrix_t* copy_matrix(matrix_t* m);
 
-matrix_t* add_matrix(matrix_t* m, matrix_t* n);
+int add_matrix(matrix_t* m, matrix_t* n);
 
-matrix_t* mult_matrix(matrix_t* m, matrix_t* n);
+int mult_matrix(matrix_t* m, matrix_t* n);
 
 matrix_t* transpose_matrix(matrix_t* m);
 
