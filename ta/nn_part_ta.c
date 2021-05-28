@@ -29,6 +29,9 @@
 #include <tee_internal_api_extensions.h>
 
 #include <nn_part_ta.h>
+#include <network.h>
+#include <matrix.h>
+#include <math_TA.h>
 
 /*
  * Called when the instance of the TA is created. This is the first call in
@@ -110,6 +113,20 @@ static TEE_Result inc_value(uint32_t param_types,
 	IMSG("Got value: %u from NW", params[0].value.a);
 	params[0].value.a++;
 	IMSG("Increase value to: %u", params[0].value.a);
+
+	matrix_t* features = create_matrix_random(10, 784, 5, 10);
+	matrix_t* labels = create_matrix_identity(10);
+	for (int i=0; i < 10; ++i) {
+        DMSG("sample: %lx\n", labels->vals[0][i]);
+    }
+	DMSG("calculating number: %d", (int) ta_ln(0.2));
+	network_t* nn = init_network();
+	double loss = forward(nn, features, labels);
+	DMSG("cost: %d\n", (int) loss);
+
+	destroy_matrix(features);
+	destroy_matrix(labels);
+	destroy_network(nn);
 
 	return TEE_SUCCESS;
 }

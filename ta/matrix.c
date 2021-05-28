@@ -48,9 +48,7 @@ matrix_t* create_matrix_identity(int dim) {
 
 // create matrix initialized with values in range randomly
 matrix_t* create_matrix_random(int rows, int cols, double start, double end) {
-    if (end >= start) {
-        assert(false);
-    }
+    assert(end > start);
 
     matrix_t* m = create_matrix(rows, cols);
     if (!m) {
@@ -59,7 +57,8 @@ matrix_t* create_matrix_random(int rows, int cols, double start, double end) {
 
     for (int i=0; i<m->rows; ++i) {
         for (int j=0; j<m->cols; ++j) {
-            m->vals[i][j] = ((double)rand())/((double)RAND_MAX) * (end - start) + start;
+            double val = ((double)rand())/((double)RAND_MAX) * (end - start) + start;
+            m->vals[i][j] = val;
         }
     }
 
@@ -112,13 +111,13 @@ void add_matrix(matrix_t* m, matrix_t* n, matrix_t* result) {
         assert(false);
     }
 
-    if (m->rows != n->rows || m->cols != n->cols || m->cols != result->cols || m->rows != result->rows) {
-        assert(false);
-    }
+    // if (m->rows != n->rows || m->cols != n->cols || m->cols != result->cols || m->rows != result->rows) {
+    //     assert(false);
+    // }
 
     for (int i=0; i<result->rows; ++i) {
         for (int j=0; j<result->cols; ++j) {
-            result->vals[i][j] = m->vals[i][j] + n->vals[i][j];
+            result->vals[i][j] = m->vals[i % m->rows][j % m->cols] + n->vals[i % n->rows][j % n->cols];
         }
     }
 }
@@ -129,13 +128,13 @@ void subtract_matrix(matrix_t* m, matrix_t* n, matrix_t* result) {
         assert(false);
     }
 
-    if (m->rows != n->rows || m->cols != n->cols || m->cols != result->cols || m->rows != result->rows) {
-        assert(false);
-    }
+    // if (m->rows != n->rows || m->cols != n->cols || m->cols != result->cols || m->rows != result->rows) {
+    //     assert(false);
+    // }
 
     for (int i=0; i<result->rows; ++i) {
         for (int j=0; j<result->cols; ++j) {
-            result->vals[i][j] = m->vals[i][j] - n->vals[i][j];
+            result->vals[i][j] = m->vals[i % m->rows][j % m->cols] + n->vals[i % n->rows][j % n->cols];
         }
     }
 }
@@ -185,6 +184,10 @@ void apply_matrix(double (*apply)(double), matrix_t* m){
     
     for (int i=0; i<m->rows; ++i) {
         for (int j=0; j<m->cols; ++j) {
+            if (m->vals[i][j] <= 0.0) {
+                DMSG("negative!");
+            }
+            DMSG("applying value: %x", m->vals[i][j]);
             m->vals[i][j] = apply(m->vals[i][j]);
         }
     } 

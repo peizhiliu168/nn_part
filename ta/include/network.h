@@ -3,10 +3,10 @@
 
 #include "matrix.h"
 
-typedef double (*activation_function)(matrix_t);
-typedef double (*activation_function_d)(matrix_t);
-typedef double (*loss_function)(matrix_t, matrix_t);
-typedef double (*loss_function_d)(matrix_t, matrix_t);
+typedef double (*activation_function)(double);
+typedef double (*activation_function_d)(double);
+typedef double (*loss_function)(matrix_t*, matrix_t*);
+typedef matrix_t* (*loss_function_d)(matrix_t*, matrix_t*);
 
 typedef struct layer {
     int prev_neurons;
@@ -46,10 +46,17 @@ typedef struct network {
     loss_function Loss;
     loss_function_d Loss_d;
 
+    // forward output
+    matrix_t* outputs;
+
 } network_t;
 
-int init_network(void);
+network_t* init_network(void);
 
-void destroy_network(void);
+void destroy_network(network_t* nn);
+
+double forward(network_t* nn, matrix_t* features, matrix_t* labels);
+
+void backward(network_t* nn, matrix_t* labels);
 
 #endif 
