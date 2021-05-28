@@ -15,8 +15,6 @@ int init_network(void) {
     int loaded_end = 4;
     double learning_rate = 1e-3;
     int batch_size = 200;
-    char activation[] = "relu";
-    char loss[] = "multiclass-sigmoid";
 
     // initialize original network
     nn = TEE_Malloc(sizeof(network_t), TEE_MALLOC_FILL_ZERO);
@@ -62,7 +60,8 @@ int init_network(void) {
     // set activation and loss functions
     nn->Activation = relu;
     nn->Activation_d = d_relu;
-    nn->Loss = multiclass_softmax;
+    nn->Loss = mean_cross_entropy_softmax;
+    nn->Loss_d = d_mean_cross_entropy_softmax;
 
 
     return 0;

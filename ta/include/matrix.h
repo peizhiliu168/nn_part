@@ -17,12 +17,14 @@ void destroy_matrix(matrix_t* m);
 
 matrix_t* copy_matrix(matrix_t* m);
 
-int add_matrix(matrix_t* m, matrix_t* n);
+void add_matrix(matrix_t* m, matrix_t* n, matrix_t* result);
 
-int mult_matrix(matrix_t* m, matrix_t* n);
+void subtract_matrix(matrix_t* m, matrix_t* n, matrix_t* result);
+
+void mult_matrix(matrix_t* m, matrix_t* n, matrix_t* result);
 
 matrix_t* transpose_matrix(matrix_t* m);
 
-int apply_matrix(double (*apply)(double), matrix_t* m);
+void apply_matrix(double (*apply)(double), matrix_t* m);
 
 #endif

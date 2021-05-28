@@ -3,12 +3,13 @@
 
 #include <stdlib.h>
 #include <matrix.h>
+#include <assert.h>
 
 // simply create matrix initialized with zeros
 matrix_t* create_matrix(int rows, int cols) {
     matrix_t* m = TEE_Malloc(sizeof(matrix_t), TEE_MALLOC_FILL_ZERO);
     if (!m){
-        return NULL;
+        assert(false);
     }
 
     m->rows = rows;
@@ -17,13 +18,13 @@ matrix_t* create_matrix(int rows, int cols) {
     m->vals = TEE_Malloc(sizeof(double*) * m->rows, TEE_MALLOC_FILL_ZERO);
     if (!m->vals) {
         destroy_matrix(m);
-        return NULL;
+        assert(false);
     }
     for (int i=0; i<m->rows; ++i) {
         double* row = TEE_Malloc(sizeof(double) * m->cols, TEE_MALLOC_FILL_ZERO);
         if (!row) {
             destroy_matrix(m);
-            return NULL;
+            assert(false);
         }
         m->vals[i] = row;
     }
@@ -35,7 +36,7 @@ matrix_t* create_matrix(int rows, int cols) {
 matrix_t* create_matrix_identity(int dim) {
     matrix_t* m = create_matrix(dim, dim);
     if (!m) {
-        return NULL;
+        assert(false);
     }
 
     for (int i=0; i<m->cols; ++i) {
@@ -48,12 +49,12 @@ matrix_t* create_matrix_identity(int dim) {
 // create matrix initialized with values in range randomly
 matrix_t* create_matrix_random(int rows, int cols, double start, double end) {
     if (end >= start) {
-        return NULL;
+        assert(false);
     }
 
     matrix_t* m = create_matrix(rows, cols);
     if (!m) {
-        return NULL;
+        assert(false);
     }
 
     for (int i=0; i<m->rows; ++i) {
@@ -88,12 +89,12 @@ L1:
 // create new matrix and copy over old matrix
 matrix_t* copy_matrix(matrix_t* m) {
     if (!m) {
-        return NULL;
+        assert(false);
     }
 
     matrix_t* copy = create_matrix(m->rows, m->cols);
     if (!copy) {
-        return NULL;
+        assert(false);
     }
 
     for (int i=0; i<m->rows; ++i) {
@@ -106,13 +107,13 @@ matrix_t* copy_matrix(matrix_t* m) {
 }
 
 // add two matrices together
-int add_matrix(matrix_t* m, matrix_t* n, matrix_t* result) {
+void add_matrix(matrix_t* m, matrix_t* n, matrix_t* result) {
     if (!m || !n || !result) {
-        return -1;
+        assert(false);
     }
 
     if (m->rows != n->rows || m->cols != n->cols || m->cols != result->cols || m->rows != result->rows) {
-        return -1;
+        assert(false);
     }
 
     for (int i=0; i<result->rows; ++i) {
@@ -120,18 +121,33 @@ int add_matrix(matrix_t* m, matrix_t* n, matrix_t* result) {
             result->vals[i][j] = m->vals[i][j] + n->vals[i][j];
         }
     }
+}
 
-    return 0;
+// add two matrices together
+void subtract_matrix(matrix_t* m, matrix_t* n, matrix_t* result) {
+    if (!m || !n || !result) {
+        assert(false);
+    }
+
+    if (m->rows != n->rows || m->cols != n->cols || m->cols != result->cols || m->rows != result->rows) {
+        assert(false);
+    }
+
+    for (int i=0; i<result->rows; ++i) {
+        for (int j=0; j<result->cols; ++j) {
+            result->vals[i][j] = m->vals[i][j] - n->vals[i][j];
+        }
+    }
 }
 
 // matrix multiplication m x n
-int mult_matrix(matrix_t* m, matrix_t* n, matrix_t* result) {
+void mult_matrix(matrix_t* m, matrix_t* n, matrix_t* result) {
     if (!m || !n || !result) {
-        return -1;
+        assert(false);
     }
 
     if (m->cols != n->rows || m->rows != result->rows || n->cols != result->cols) {
-        return -1;
+        assert(false);
     }
 
     for (int i = 0; i < m->rows; ++i) {
@@ -141,15 +157,13 @@ int mult_matrix(matrix_t* m, matrix_t* n, matrix_t* result) {
          }
       }
    }
-
-    return 0;
 }
 
 // transpose matrix 
 matrix_t* transpose_matrix(matrix_t* m) {
     matrix_t* transpose = create_matrix(m->cols, m->rows);
     if (!transpose) {
-        return NULL;
+        assert(false);
     }
 
     for (int i=0; i<transpose->rows; ++i) {
@@ -164,9 +178,9 @@ matrix_t* transpose_matrix(matrix_t* m) {
 // given a function that takes in a single value and 
 // returns a single value, apply that function to every
 // element of the matrix
-int apply_matrix(double (*apply)(double), matrix_t* m){
+void apply_matrix(double (*apply)(double), matrix_t* m){
     if (!m) {
-        return -1;
+        assert(false);
     }
     
     for (int i=0; i<m->rows; ++i) {
@@ -174,7 +188,5 @@ int apply_matrix(double (*apply)(double), matrix_t* m){
             m->vals[i][j] = apply(m->vals[i][j]);
         }
     } 
-
-    return 0;
 }
 
