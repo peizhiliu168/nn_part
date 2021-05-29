@@ -46,6 +46,8 @@ typedef struct network {
     loss_function Loss;
     loss_function_d Loss_d;
 
+    matrix_t* outputs;
+
 
 } network_t;
 

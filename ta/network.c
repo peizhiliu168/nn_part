@@ -123,10 +123,12 @@ double forward(network_t* nn, matrix_t* features, matrix_t* labels) {
     DMSG("starting forward propagation\n");
     assert(nn != NULL && features != NULL && labels != NULL);
 
-    matrix_t* inputs = copy_matrix(features);
+    matrix_t* outputs = features;
 
     for (int i=0; i < nn->n_layers; ++i) {
         // conditional load layers here...
+
+        matrix_t* inputs = copy_matrix(outputs);
 
         layer_t* layer = nn->layers[i];
         DMSG("rows: %d, cols: %d\n", inputs->rows, inputs->cols);
@@ -134,15 +136,15 @@ double forward(network_t* nn, matrix_t* features, matrix_t* labels) {
         destroy_matrix(layer->outputs);
         layer->inputs = inputs;
 
-        matrix_t* outputs = create_matrix(inputs->rows, layer->curr_neurons);
+        outputs = create_matrix(inputs->rows, layer->curr_neurons);
         mult_matrix(inputs, layer->weights, outputs);
         add_matrix_element(outputs, layer->bias, outputs);
         apply_matrix(nn->Activation, outputs);
 
-        // note: the output pointer is shared by the next layer
-        // as the next layer's input
+        // note: the output pointer is not shared by the next layer
+        // as the next layer's input, this makes things a lot 
+        // easier to manage
         layer->outputs = outputs;
-        inputs = outputs;
 
         DMSG("propagated through layer %d\n", i);
     }
@@ -227,7 +229,7 @@ void backward(network_t* nn, matrix_t* labels) {
         DMSG("input rows: %d, cols: %d\n", layer->inputs->rows, layer->inputs->cols);
         DMSG("output rows: %d, cols: %d\n", layer->outputs->rows, layer->outputs->cols);
         DMSG("d_weights rows: %d, cols: %d\n", layer->d_weights->rows, layer->d_weights->cols);
-        DMSG("d_bias rows: %d, cols: %d\n", layer->d_bias->rows, layer->d_bias->cols);
+        DMSG("d_bias rows: %d, cols: %d\n", layer->d_bias->rows, layer->inputs->cols);
     }
     destroy_matrix(d_outputs);
 
