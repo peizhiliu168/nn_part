@@ -23,7 +23,7 @@ typedef struct layer {
 
     // needed for backprop
     matrix_t* inputs;
-    matrix_t* error;
+    matrix_t* outputs;
 
 } layer_t;
 
@@ -46,8 +46,6 @@ typedef struct network {
     loss_function Loss;
     loss_function_d Loss_d;
 
-    // forward output
-    matrix_t* outputs;
 
 } network_t;
 

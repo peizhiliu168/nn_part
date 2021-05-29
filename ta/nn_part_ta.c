@@ -119,14 +119,15 @@ static TEE_Result inc_value(uint32_t param_types,
 	for (int i=0; i < 10; ++i) {
         DMSG("sample: %lx\n", labels->vals[0][i]);
     }
-	DMSG("calculating number: %d", (int) ta_ln(0.2));
+	DMSG("calculating number: %d\n", (int) ta_ln(1e-2));
 	network_t* nn = init_network();
 	double loss = forward(nn, features, labels);
 	DMSG("cost: %d\n", (int) loss);
+	backward(nn, labels);
 
+	destroy_network(nn);
 	destroy_matrix(features);
 	destroy_matrix(labels);
-	destroy_network(nn);
 
 	return TEE_SUCCESS;
 }

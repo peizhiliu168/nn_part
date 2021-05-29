@@ -44,10 +44,10 @@
 #define TA_FLAGS			TA_FLAG_EXEC_DDR
 
 /* Provisioned stack size */
-#define TA_STACK_SIZE			(2ull * 1024ull * 1024ull)
+#define TA_STACK_SIZE			(1 * 1024 * 1024)
 
 /* Provisioned heap size for TEE_Malloc() and friends */
-#define TA_DATA_SIZE			(250ull * 1024ull * 1024ull)
+#define TA_DATA_SIZE			(60 * 1024 * 1024)
 
 /* The gpd.ta.version property */
 #define TA_VERSION	"1.0"

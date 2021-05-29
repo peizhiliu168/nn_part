@@ -97,8 +97,8 @@ matrix_t* d_mean_cross_entropy_softmax(matrix_t* logits, matrix_t* labels) {
     assert(logits->rows == labels->rows && logits->cols == labels->cols);
     
     matrix_t* pred = copy_matrix(logits);
-
-    subtract_matrix(pred, labels, pred);
+    softmax(pred);
+    subtract_matrix_element(pred, labels, pred);
 
     return pred;
 }

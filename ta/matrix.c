@@ -78,6 +78,9 @@ void destroy_matrix(matrix_t* m) {
         if (!m->vals[i]) {
             break;
         }
+        // for (int j=0; j<m->cols; ++j){
+        //     DMSG("destory matrix value: %d\n", m->vals[i][j]);
+        // }
         TEE_Free(m->vals[i]);
     }
     TEE_Free(m->vals);
@@ -106,7 +109,7 @@ matrix_t* copy_matrix(matrix_t* m) {
 }
 
 // add two matrices together
-void add_matrix(matrix_t* m, matrix_t* n, matrix_t* result) {
+void add_matrix_element(matrix_t* m, matrix_t* n, matrix_t* result) {
     if (!m || !n || !result) {
         assert(false);
     }
@@ -123,7 +126,7 @@ void add_matrix(matrix_t* m, matrix_t* n, matrix_t* result) {
 }
 
 // add two matrices together
-void subtract_matrix(matrix_t* m, matrix_t* n, matrix_t* result) {
+void subtract_matrix_element(matrix_t* m, matrix_t* n, matrix_t* result) {
     if (!m || !n || !result) {
         assert(false);
     }
@@ -134,7 +137,41 @@ void subtract_matrix(matrix_t* m, matrix_t* n, matrix_t* result) {
 
     for (int i=0; i<result->rows; ++i) {
         for (int j=0; j<result->cols; ++j) {
-            result->vals[i][j] = m->vals[i % m->rows][j % m->cols] + n->vals[i % n->rows][j % n->cols];
+            result->vals[i][j] = m->vals[i % m->rows][j % m->cols] - n->vals[i % n->rows][j % n->cols];
+        }
+    }
+}
+
+// add two matrices together
+void mult_matrix_element(matrix_t* m, matrix_t* n, matrix_t* result) {
+    if (!m || !n || !result) {
+        assert(false);
+    }
+
+    // if (m->rows != n->rows || m->cols != n->cols || m->cols != result->cols || m->rows != result->rows) {
+    //     assert(false);
+    // }
+
+    for (int i=0; i<result->rows; ++i) {
+        for (int j=0; j<result->cols; ++j) {
+            result->vals[i][j] = m->vals[i % m->rows][j % m->cols] * n->vals[i % n->rows][j % n->cols];
+        }
+    }
+}
+
+// add two matrices together
+void div_matrix_element(matrix_t* m, matrix_t* n, matrix_t* result) {
+    if (!m || !n || !result) {
+        assert(false);
+    }
+
+    // if (m->rows != n->rows || m->cols != n->cols || m->cols != result->cols || m->rows != result->rows) {
+    //     assert(false);
+    // }
+
+    for (int i=0; i<result->rows; ++i) {
+        for (int j=0; j<result->cols; ++j) {
+            result->vals[i][j] = m->vals[i % m->rows][j % m->cols] / n->vals[i % n->rows][j % n->cols];
         }
     }
 }
@@ -156,6 +193,34 @@ void mult_matrix(matrix_t* m, matrix_t* n, matrix_t* result) {
          }
       }
    }
+}
+
+matrix_t* col_sum_matrix(matrix_t* m){
+
+    //The result matrix should be 1 * width
+    matrix_t* result = create_matrix(1, m->cols);
+
+    // For every col in result, we traverse the original matrix 
+    for (int j = 0; j < m->cols; ++j){
+        for (int i = 0; i < m->rows; ++i){
+            result->vals[0][j] += m->vals[i][j]; 
+        }
+    }
+    return result;
+}
+
+matrix_t* row_sum_matrix(matrix_t* m){
+
+    //The result matrix should be height * 1
+    matrix_t* result = create_matrix(m->rows, 1);
+
+    // For every row in result, we traverse the original matrix 
+    for (int i = 0; i < m->rows; ++i){
+        for (int j = 0; j < m->cols; ++j){
+            result->vals[i][0] += m->vals[i][j]; 
+        }
+    }
+    return result;
 }
 
 // transpose matrix 

@@ -17,11 +17,19 @@ void destroy_matrix(matrix_t* m);
 
 matrix_t* copy_matrix(matrix_t* m);
 
-void add_matrix(matrix_t* m, matrix_t* n, matrix_t* result);
+void add_matrix_element(matrix_t* m, matrix_t* n, matrix_t* result);
 
-void subtract_matrix(matrix_t* m, matrix_t* n, matrix_t* result);
+void subtract_matrix_element(matrix_t* m, matrix_t* n, matrix_t* result);
+
+void mult_matrix_element(matrix_t* m, matrix_t* n, matrix_t* result);
+
+void div_matrix_element(matrix_t* m, matrix_t* n, matrix_t* result);
 
 void mult_matrix(matrix_t* m, matrix_t* n, matrix_t* result);
+
+matrix_t* col_sum_matrix(matrix_t* m);
+
+matrix_t* row_sum_matrix(matrix_t* m);
 
 matrix_t* transpose_matrix(matrix_t* m);
 
