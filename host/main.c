@@ -35,7 +35,7 @@
 
 /* For the UUID (found in the TA's h-file(s)) */
 #include <nn_part_ta.h>
-#include "data.h"
+#include "data.c"
 
 matrix_t get_matrix_from_image_dir(char* directory, int w, int h, int c) {
 	matrix_t* images = malloc(sizeof(matrix_t));

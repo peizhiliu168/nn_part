@@ -46,6 +46,13 @@ image load_image_stb(char *filename, int channels)
     return im;
 }
 
+void free_image(image m)
+{
+    if(m.data){
+        free(m.data);
+    }
+}
+
 static float get_pixel(image m, int x, int y, int c)
 {
     assert(x < m.w && y < m.h && c < m.c);
@@ -108,14 +115,6 @@ image resize_image(image im, int w, int h)
     free_image(part);
     return resized;
 }
-
-void free_image(image m)
-{
-    if(m.data){
-        free(m.data);
-    }
-}
-
 
 image load_image(char *filename, int w, int h, int c)
 {
