@@ -8,6 +8,7 @@ LOCAL_CFLAGS += -Wall
 LOCAL_SRC_FILES += host/main.c
 
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/ta/include
+LOCAL_C_INCLUDES := $(LOCAL_PATH)/host/include
 
 LOCAL_SHARED_LIBRARIES := libteec
 LOCAL_MODULE := nn_part

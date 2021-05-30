@@ -194,20 +194,6 @@ void backward(network_t* nn, matrix_t* labels) {
         mult_matrix(inputs_T, d_scores, layer->d_weights);
         destroy_matrix(inputs_T);
 
-
-        //    def backprop(self, labels):
-        // """Backward propagate the gradients/derivatives through the network.
-        // Iteratively propagate the gradients/derivatives (starting from
-        // outputs) through each layer, and save gradients/derivatives of
-        // each parameter (weights or bias) in the layer.
-        // """
-        // d_outputs = self.d_loss(self.layers[-1].a, labels)
-        // for layer in self.layers[::-1]:
-        //     d_inputs = layer.backward(d_outputs)
-        //     d_outputs = d_inputs
-
-        
-
         // d_inputs = np.dot(d_scores, self.w.T)
         matrix_t* W_T = transpose_matrix(layer->weights);
         matrix_t* d_inputs = create_matrix(d_scores->rows, W_T->cols);

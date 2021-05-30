@@ -6,9 +6,9 @@ OBJCOPY ?= $(CROSS_COMPILE)objcopy
 OBJDUMP ?= $(CROSS_COMPILE)objdump
 READELF ?= $(CROSS_COMPILE)readelf
 
-OBJS = main.o
+OBJS = main.o data.o
 
-CFLAGS += -Wall -I../ta/include -I$(TEEC_EXPORT)/include -I./include
+CFLAGS += -Wall -I../ta/include -I$(TEEC_EXPORT)/include -I./ -I./include -I..
 #Add/link other required libraries here
 LDADD += -lteec -L$(TEEC_EXPORT)/lib
 
@@ -18,7 +18,7 @@ BINARY = nn_part
 all: $(BINARY)
 
 $(BINARY): $(OBJS)
-	$(CC) -o $@ $< $(LDADD)
+	#$(CC) $(CFLAGS) -o $@ $< $(LDADD)
 
 .PHONY: clean
 clean:

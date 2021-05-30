@@ -28,12 +28,38 @@
 #include <err.h>
 #include <stdio.h>
 #include <string.h>
+#include <dirent.h> 
 
 /* OP-TEE TEE client API (built by optee_client) */
 #include <tee_client_api.h>
 
 /* For the UUID (found in the TA's h-file(s)) */
 #include <nn_part_ta.h>
+#include "data.h"
+
+matrix_t get_matrix_from_image_dir(char* directory, int w, int h, int c) {
+	matrix_t* images = malloc(sizeof(matrix_t));
+	DIR *d;
+	struct dirent *dir;
+	
+	d = opendir(directory);
+	if (d) {
+		while ((dir = readdir(d)) != NULL) {
+			char filename[200];
+			sprintf(filename , "%s/%s", directory, dir->d_name) ;
+			
+			image img = load_image(filename, w, h, c);
+			for (int i=0; i<h; ++i) {
+				for (int j=0; j<w; ++j){
+					printf("%f ", img.data[i*h + j]);
+				}
+				printf("\n");
+			}
+			printf("\n\n");
+		}
+		closedir(d);
+	}
+}
 
 int main(void)
 {
@@ -82,6 +108,9 @@ int main(void)
 	 * TA_HELLO_WORLD_CMD_INC_VALUE is the actual function in the TA to be
 	 * called.
 	 */
+
+	get_matrix_from_image_dir("/root/mnist/images", 28, 28, 1);
+
 	printf("Invoking TA to increment %d\n", op.params[0].value.a);
 	res = TEEC_InvokeCommand(&sess, TA_NN_PART_CMD_INC_VALUE, &op,
 				 &err_origin);
@@ -89,6 +118,8 @@ int main(void)
 		errx(1, "TEEC_InvokeCommand failed with code 0x%x origin 0x%x",
 			res, err_origin);
 	printf("TA incremented value to %d\n", op.params[0].value.a);
+
+	
 
 	/*
 	 * We're done with the TA, close the session and
@@ -104,3 +135,4 @@ int main(void)
 
 	return 0;
 }
+
