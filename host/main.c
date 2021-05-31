@@ -28,44 +28,114 @@
 #include <err.h>
 #include <stdio.h>
 #include <string.h>
-#include <dirent.h> 
+#include <stdlib.h>
 
 /* OP-TEE TEE client API (built by optee_client) */
 #include <tee_client_api.h>
 
 /* For the UUID (found in the TA's h-file(s)) */
 #include <nn_part_ta.h>
-#include "data.c"
+#include <data.h>
+#include <matrix.h>
 
-matrix_t get_matrix_from_image_dir(char* directory, int w, int h, int c) {
-	matrix_t* images = malloc(sizeof(matrix_t));
-	DIR *d;
-	struct dirent *dir;
-	
-	d = opendir(directory);
-	if (d) {
-		while ((dir = readdir(d)) != NULL) {
-			char filename[200];
-			sprintf(filename , "%s/%s", directory, dir->d_name) ;
-			
-			image img = load_image(filename, w, h, c);
-			for (int i=0; i<h; ++i) {
-				for (int j=0; j<w; ++j){
-					printf("%f ", img.data[i*h + j]);
-				}
-				printf("\n");
-			}
-			printf("\n\n");
-		}
-		closedir(d);
+TEEC_Session sess;
+
+void TEEC_SendData(char* directory, int N,
+              int w, int h, int c, 
+              char* identifier, int classes) {
+	// setup RPC params
+	TEEC_Operation op;
+    uint32_t origin;
+    TEEC_Result res;
+	memset(&op, 0, sizeof(op));
+	op.paramTypes = TEEC_PARAM_TYPES(TEEC_MEMREF_TEMP_INPUT,
+										TEEC_VALUE_INPUT,
+										TEEC_MEMREF_TEMP_INPUT,
+										TEEC_VALUE_INPUT);
+
+	// fetch data and populate matrix
+	matrix_t* features = create_matrix(N, w*h*c);
+	matrix_t* labels = create_matrix(N, classes);
+	get_data_matrix_from_image_dir(directory, N,
+									w, h, c, 
+									identifier, classes,
+									features, labels);
+
+	// create parameter buffers
+	double* params0 = malloc(sizeof(double) * features->rows * features->cols);
+	double* params1 = malloc(sizeof(double) * labels->rows * labels->cols);
+	for (int i=0; i < features->rows; ++i){
+		for (int j=0; j < features->cols; ++j){
+			params0[i*features->cols + j] = features->vals[i][j];
+		}	
 	}
+	for (int i=0; i < labels->rows; ++i){
+		for (int j=0; j < labels->cols; ++j){
+			params1[i*labels->cols + j] = labels->vals[i][j];
+		}	
+	}
+
+
+	// set the network params	
+	op.params[0].tmpref.buffer = params0;
+	op.params[0].tmpref.size = sizeof(double) * features->rows * features->cols;
+	op.params[1].value.a = features->rows; // a --> number of rows
+	op.params[1].value.b = features->cols; // b --> number of columns
+	op.params[2].tmpref.buffer = params1;
+	op.params[2].tmpref.size = sizeof(double) * labels->rows * labels->cols;
+	op.params[3].value.a = labels->rows; // a --> number of rows
+	op.params[3].value.b = labels->cols; // b --> number of columns
+
+	printf("----------------------------------------------------\n");
+	for (int i=0; i < features->rows * features->cols; ++i ) {
+		printf("%f ", op.params[0].tmpref.buffer);
+	}
+	printf("\n");
+
+
+	for (int i=0; i < labels->rows * labels->cols; ++i ) {
+		printf("%f ", op.params[1].tmpref.buffer);
+	}
+	printf("----------------------------------------------------\n");
+
+	// send RPC call
+	res = TEEC_InvokeCommand(&sess, TA_NN_PART_CMD_SEND_DATA, &op, &origin);
+
+	if (res != TEEC_SUCCESS) {
+		errx(1, "TEEC_InvokeCommand(forward) failed 0x%x origin 0x%x",
+         	res, origin);
+	}
+
+
+	// for (int i=0; i < features->rows; ++i){
+	// 	for (int j=0; j < features->cols; ++j){
+	// 		printf("%f ", features->vals[i][j]);
+	// 	}	
+	// 	printf("\n");
+	// }
+	// printf("\n");
+
+	// for (int i=0; i < labels->rows; ++i){
+	// 	for (int j=0; j < labels->cols; ++j){
+	// 		printf("%f ", labels->vals[i][j]);
+	// 	}	
+	// 	printf("\n");
+	// }
+	// printf("\n");
+
+	free(params0);
+	free(params1);
+
+	destroy_matrix(features);
+	destroy_matrix(labels);
+
+	printf("finished send data \n");
 }
 
 int main(void)
 {
 	TEEC_Result res;
 	TEEC_Context ctx;
-	TEEC_Session sess;
 	TEEC_Operation op;
 	TEEC_UUID uuid = TA_NN_PART_UUID;
 	uint32_t err_origin;
@@ -108,8 +178,8 @@ int main(void)
 	 * TA_HELLO_WORLD_CMD_INC_VALUE is the actual function in the TA to be
 	 * called.
 	 */
-
-	get_matrix_from_image_dir("/root/mnist/images", 28, 28, 1);
+	char dir[] = "/root/mnist/images";
+	TEEC_SendData(dir, 5, 28, 28, 1, "_c", 10);
 
 	printf("Invoking TA to increment %d\n", op.params[0].value.a);
 	res = TEEC_InvokeCommand(&sess, TA_NN_PART_CMD_INC_VALUE, &op,
@@ -135,4 +205,3 @@ int main(void)
 
 	return 0;
 }
-

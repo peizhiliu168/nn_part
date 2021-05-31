@@ -2,6 +2,8 @@
 #define TA_NETWORK_H
 
 #include "matrix.h"
+#include "optimizer.h"
+
 
 typedef double (*activation_function)(double);
 typedef double (*activation_function_d)(double);
@@ -37,8 +39,9 @@ typedef struct network {
     int loaded_end;
 
     // hyperparameters
-    double learning_rate;
     int batch_size;
+    int learning_rate;
+    optimizer_type_t optimizer;
 
     // methods
     activation_function Activation;
@@ -46,17 +49,16 @@ typedef struct network {
     loss_function Loss;
     loss_function_d Loss_d;
 
-    matrix_t* outputs;
-
-
 } network_t;
 
-network_t* init_network(void);
+void init_network(void);
 
-void destroy_network(network_t* nn);
+void destroy_network(void);
 
-double forward(network_t* nn, matrix_t* features, matrix_t* labels);
+double forward(matrix_t* features, matrix_t* labels);
 
-void backward(network_t* nn, matrix_t* labels);
+void backward(matrix_t* labels);
+
+extern network_t* nn;
 
 #endif 

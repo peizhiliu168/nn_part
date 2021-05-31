@@ -5,8 +5,11 @@
 #include <loss.h>
 #include <activations.h>
 #include <assert.h>
+#include <optimizer.h>
 
-network_t* init_network(void) {
+network_t* nn;
+
+void init_network(void) {
     DMSG("initializing network\n");
     // parameters we should pass in later
     int n_layers = 5;
@@ -15,9 +18,11 @@ network_t* init_network(void) {
     int loaded_end = 4;
     double learning_rate = 1e-3;
     int batch_size = 200;
+    int epochs = 100;
+    optimizer_type_t optimizer = GD;
 
     // initialize original network
-    network_t* nn = TEE_Malloc(sizeof(network_t), TEE_MALLOC_FILL_ZERO);
+    nn = TEE_Malloc(sizeof(network_t), TEE_MALLOC_FILL_ZERO);
     if (!nn) {
         assert(false);
     }
@@ -28,18 +33,19 @@ network_t* init_network(void) {
     nn->loaded_end = loaded_end;
     nn->learning_rate = learning_rate;
     nn->batch_size = batch_size;
+    nn->optimizer = optimizer;
     DMSG("set network parameters\n");
 
     // initialize network layers
     nn->layers = TEE_Malloc(sizeof(layer_t*) * nn->n_layers, TEE_MALLOC_FILL_ZERO);
     if (!nn->layers) {
-        destroy_network(nn);
+        destroy_network();
         assert(false);    
     }
     for (int i=0; i<n_layers; ++i) {
         layer_t* layer = TEE_Malloc(sizeof(layer_t), TEE_MALLOC_FILL_ZERO);
         if (!layer) {
-            destroy_network(nn);
+            destroy_network();
             assert(false);
         }
 
@@ -66,10 +72,10 @@ network_t* init_network(void) {
     nn->Loss_d = d_mean_cross_entropy_softmax;
 
     DMSG("finished initializing network\n");
-    return nn;
+    //return nn;
 }
 
-void destroy_network(network_t* nn) {
+void destroy_network(void) {
     DMSG("destroying network...\n");
     if (!nn) {
         return;
@@ -119,7 +125,7 @@ L1:
 
 // input and labels are in row-major order, meaning 
 // each row corresponds to a particular training example. 
-double forward(network_t* nn, matrix_t* features, matrix_t* labels) {
+double forward(matrix_t* features, matrix_t* labels) {
     DMSG("starting forward propagation\n");
     assert(nn != NULL && features != NULL && labels != NULL);
 
@@ -154,7 +160,7 @@ double forward(network_t* nn, matrix_t* features, matrix_t* labels) {
 }
 
 // labels are in row-major order
-void backward(network_t* nn, matrix_t* labels) {
+void backward(matrix_t* labels) {
     DMSG("starting back propagation\n");
     assert(nn != NULL && labels != NULL);
 
@@ -222,4 +228,11 @@ void backward(network_t* nn, matrix_t* labels) {
     DMSG("finished backprop!\n");
 
     return;
+}
+
+void train(int epochs) {
+    for (int epoch=0; epoch < epochs; ++epoch) {
+        double sum_loss = 0.0;
+        continue;
+    }
 }

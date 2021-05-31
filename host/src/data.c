@@ -1,9 +1,11 @@
-#include "data.h"
+#include <data.h>
+#include <dirent.h>
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
-#include <malloc.h>
+#include <ctype.h>
+#include <string.h>
 
 image make_empty_image(int w, int h, int c)
 {
@@ -128,3 +130,52 @@ image load_image(char *filename, int w, int h, int c)
     return out;
 }
 
+// int contains_num(const char *s)
+// {
+//     while (*s) {
+//         if (isdigit(*s++)) return 1;
+//     }
+
+//     return -1;
+// }
+
+// features matrix should be N x (w*h*c)
+// labels matrix should be N x classes, returned in one-hot-encoding
+void get_data_matrix_from_image_dir(char* directory, int N,
+                                    int w, int h, int c, 
+                                    char* identifier, int classes,
+                                    matrix_t* features, matrix_t* labels){
+    assert(features->rows == N && features->cols == (w*h*c));
+    assert(labels->rows == N && labels->cols == classes);
+
+	DIR *d;
+	struct dirent *dir;
+	
+	d = opendir(directory);
+	if (d) {
+        int counter = 0;
+		while ((dir = readdir(d)) != NULL && counter < N) {
+            if (strstr(dir->d_name, ".png")) {
+                char* class = strstr(dir->d_name, identifier);
+                if (!class) {
+                    continue;
+                }
+                class += 2; // move pointer right to get class number
+                assert(isdigit(class));
+                int class_val = *class - '0';
+                labels->vals[counter][class_val] = 1.0;                
+                
+                char filename[255];
+                sprintf(filename , "%s/%s", directory, dir->d_name) ;
+                
+                image img = load_image(filename, w, h, c);
+
+                for (int i = 0; i < (w*h*c); ++i) {
+                    features->vals[counter][i] = img.data[i];
+                }
+                counter++;
+            }
+		}
+		closedir(d);
+	}
+}

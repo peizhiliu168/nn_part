@@ -25,6 +25,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <assert.h>
+
 #include <tee_internal_api.h>
 #include <tee_internal_api_extensions.h>
 
@@ -32,6 +34,7 @@
 #include <network.h>
 #include <matrix.h>
 #include <math_TA.h>
+#include <data.h>
 
 /*
  * Called when the instance of the TA is created. This is the first call in
@@ -83,6 +86,8 @@ TEE_Result TA_OpenSessionEntryPoint(uint32_t param_types,
 	 */
 	IMSG("Hello World!\n");
 
+	init_network();
+
 	/* If return value != TEE_SUCCESS the session will not be created. */
 	return TEE_SUCCESS;
 }
@@ -114,18 +119,37 @@ static TEE_Result inc_value(uint32_t param_types,
 	params[0].value.a++;
 	IMSG("Increase value to: %u", params[0].value.a);
 
+
+	printf("----------------------------------------------------\n");
+	for (int i=0; i < data_loader->N; ++i ) {
+		for (int j=0; j < data_loader->feature_size; ++j) {
+			printf("%ld ", data_loader->features->vals[i][j]);
+		}
+		printf("\n");
+	}
+	printf("\n");
+
+
+	for (int i=0; i < data_loader->N; ++i ) {
+		for (int j=0; j < data_loader->classes; ++j) {
+			printf("%ld ", data_loader->labels->vals[i][j]);
+		}
+		printf("\n");
+	}
+	printf("----------------------------------------------------\n");
+
 	matrix_t* features = create_matrix_random(10, 784, 5, 10);
 	matrix_t* labels = create_matrix_identity(10);
 	for (int i=0; i < 10; ++i) {
-        DMSG("sample: %lx\n", labels->vals[0][i]);
+        DMSG("sample: %.6f\n", labels->vals[0][i]);
     }
 	DMSG("calculating number: %d\n", (int) ta_ln(1e-2));
-	network_t* nn = init_network();
-	double loss = forward(nn, features, labels);
+	//init_network();
+	double loss = forward(features, labels);
 	DMSG("cost: %d\n", (int) loss);
-	backward(nn, labels);
+	backward(labels);
 
-	destroy_network(nn);
+	destroy_network();
 	destroy_matrix(features);
 	destroy_matrix(labels);
 
@@ -151,6 +175,51 @@ static TEE_Result dec_value(uint32_t param_types,
 
 	return TEE_SUCCESS;
 }
+
+static TEE_Result send_data(uint32_t param_types, TEE_Param params[4]){
+	assert(nn != NULL);
+
+	uint32_t exp_param_types = TEE_PARAM_TYPES(TEE_PARAM_TYPE_MEMREF_INPUT,
+						   TEE_PARAM_TYPE_VALUE_INPUT,
+						   TEE_PARAM_TYPE_MEMREF_INPUT,
+						   TEE_PARAM_TYPE_VALUE_INPUT);
+	DMSG("send_data has been called");
+
+	if (param_types != exp_param_types) return TEE_ERROR_BAD_PARAMETERS;
+
+	double *features = params[0].memref.buffer; // a single row is all the pixels 
+	int features_size = params[0].memref.size / sizeof(double);
+
+	int feature_rows = params[1].value.a;
+	int feature_cols = params[1].value.b;
+
+	double *labels = params[2].memref.buffer; // one hot encoding
+	int labels_size = params[2].memref.size  / sizeof(double);
+
+	int label_rows = params[3].value.a;
+	int label_cols = params[3].value.b;
+
+	printf("----------------------------------------------------\n");
+	for (int i=0; i < feature_rows * feature_cols; ++i ) {
+		printf("%ld ", features[i]);
+	}
+	printf("\n");
+
+
+	for (int i=0; i < label_rows * label_cols; ++i ) {
+		printf("%ld ", labels[i]);
+	}
+	printf("----------------------------------------------------\n");
+
+	matrix_t* wrapped_features = wrap_data(features, features_size, feature_rows, feature_cols);
+	matrix_t* wrapped_labels = wrap_data(labels, labels_size, label_rows, label_cols);
+
+	init_data(wrapped_features, wrapped_labels, nn->batch_size);
+	DMSG("send_data has finished");
+
+	return TEE_SUCCESS;
+}
+
 /*
  * Called when a TA is invoked. sess_ctx hold that value that was
  * assigned by TA_OpenSessionEntryPoint(). The rest of the paramters
@@ -167,6 +236,8 @@ TEE_Result TA_InvokeCommandEntryPoint(void __maybe_unused *sess_ctx,
 		return inc_value(param_types, params);
 	case TA_NN_PART_CMD_DEC_VALUE:
 		return dec_value(param_types, params);
+	case TA_NN_PART_CMD_SEND_DATA:
+		return send_data(param_types, params);
 	default:
 		return TEE_ERROR_BAD_PARAMETERS;
 	}
