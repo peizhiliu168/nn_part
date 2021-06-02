@@ -35,4 +35,6 @@ matrix_t* transpose_matrix(matrix_t* m);
 
 void apply_matrix(double (*apply)(double), matrix_t* m);
 
+matrix_t* copy_submatrix(matrix_t* m, int start_row, int end_row, int start_col, int end_col);
+
 #endif

@@ -86,17 +86,17 @@ void TEEC_SendData(char* directory, int N,
 	op.params[3].value.a = labels->rows; // a --> number of rows
 	op.params[3].value.b = labels->cols; // b --> number of columns
 
-	printf("----------------------------------------------------\n");
-	for (int i=0; i < features->rows * features->cols; ++i ) {
-		printf("%f ", op.params[0].tmpref.buffer);
-	}
-	printf("\n");
+	// printf("----------------------------------------------------\n");
+	// for (int i=0; i < features->rows * features->cols; ++i ) {
+	// 	printf("%f ", op.params[0].tmpref.buffer);
+	// }
+	// printf("\n");
 
 
-	for (int i=0; i < labels->rows * labels->cols; ++i ) {
-		printf("%f ", op.params[1].tmpref.buffer);
-	}
-	printf("----------------------------------------------------\n");
+	// for (int i=0; i < labels->rows * labels->cols; ++i ) {
+	// 	printf("%f ", op.params[1].tmpref.buffer);
+	// }
+	// printf("----------------------------------------------------\n");
 
 	// send RPC call
 	res = TEEC_InvokeCommand(&sess, TA_NN_PART_CMD_SEND_DATA, &op, &origin);
@@ -179,7 +179,7 @@ int main(void)
 	 * called.
 	 */
 	char dir[] = "/root/mnist/images";
-	TEEC_SendData(dir, 5, 28, 28, 1, "_c", 10);
+	TEEC_SendData(dir, 3000, 28, 28, 1, "_c", 10);
 
 	printf("Invoking TA to increment %d\n", op.params[0].value.a);
 	res = TEEC_InvokeCommand(&sess, TA_NN_PART_CMD_INC_VALUE, &op,

@@ -250,11 +250,30 @@ void apply_matrix(double (*apply)(double), matrix_t* m){
     for (int i=0; i<m->rows; ++i) {
         for (int j=0; j<m->cols; ++j) {
             if (m->vals[i][j] <= 0.0) {
-                DMSG("negative!");
+                //DMSG("negative!");
             }
-            DMSG("applying value: %x", m->vals[i][j]);
+            //DMSG("applying value: %x", m->vals[i][j]);
             m->vals[i][j] = apply(m->vals[i][j]);
         }
     } 
 }
 
+// copies over a submatrix of a matrix, note starts are inclusive
+// and ends are exclusive. Ends must be greater than starts
+matrix_t* copy_submatrix(matrix_t* m, int start_row, int end_row, int start_col, int end_col) {
+    assert(m != NULL);
+    assert(start_row >= 0 && start_row < m->rows);
+    assert(end_row > 0 && end_row <= m->rows);
+    assert(start_col >= 0 && start_col < m->cols);
+    assert(end_col > 0 && end_col <= m->cols);
+    assert(end_col > start_col && end_row > start_row);
+
+    matrix_t* copy = create_matrix(end_row - start_row, end_col - start_col);
+    for (int i=0; i < copy->rows; ++i) {
+        for (int j=0; j < copy->cols; ++j) {
+            copy->vals[i][j] = m->vals[start_row + i][start_col + j];
+        }
+    }
+
+    return copy;
+}

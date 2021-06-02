@@ -40,7 +40,7 @@ typedef struct network {
 
     // hyperparameters
     int batch_size;
-    int learning_rate;
+    double learning_rate;
     optimizer_type_t optimizer;
 
     // methods
@@ -58,6 +58,8 @@ void destroy_network(void);
 double forward(matrix_t* features, matrix_t* labels);
 
 void backward(matrix_t* labels);
+
+void train(int epochs);
 
 extern network_t* nn;
 

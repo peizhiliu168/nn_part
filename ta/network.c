@@ -6,19 +6,20 @@
 #include <activations.h>
 #include <assert.h>
 #include <optimizer.h>
+#include <data.h>
+#include <math_TA.h>
 
 network_t* nn;
 
 void init_network(void) {
-    DMSG("initializing network\n");
+    //DMSG("initializing network\n");
     // parameters we should pass in later
     int n_layers = 5;
     int layers[] = {784, 10, 10, 10, 10, 10};
     int loaded_start = 0;
     int loaded_end = 4;
-    double learning_rate = 1e-3;
+    double learning_rate = 0.001;
     int batch_size = 200;
-    int epochs = 100;
     optimizer_type_t optimizer = GD;
 
     // initialize original network
@@ -34,7 +35,7 @@ void init_network(void) {
     nn->learning_rate = learning_rate;
     nn->batch_size = batch_size;
     nn->optimizer = optimizer;
-    DMSG("set network parameters\n");
+    //DMSG("set network parameters\n");
 
     // initialize network layers
     nn->layers = TEE_Malloc(sizeof(layer_t*) * nn->n_layers, TEE_MALLOC_FILL_ZERO);
@@ -62,7 +63,7 @@ void init_network(void) {
         // layer->error = create_matrix(layer->curr_neurons, 1);
 
         nn->layers[i] = layer;
-        DMSG("created layer %d with %d and %d neurons\n", i, layer->prev_neurons, layer->curr_neurons);
+        //DMSG("created layer %d with %d and %d neurons\n", i, layer->prev_neurons, layer->curr_neurons);
     }
 
     // set activation and loss functions
@@ -71,12 +72,12 @@ void init_network(void) {
     nn->Loss = mean_cross_entropy_softmax;
     nn->Loss_d = d_mean_cross_entropy_softmax;
 
-    DMSG("finished initializing network\n");
+    //DMSG("finished initializing network\n");
     //return nn;
 }
 
 void destroy_network(void) {
-    DMSG("destroying network...\n");
+    //DMSG("destroying network...\n");
     if (!nn) {
         return;
     }
@@ -86,47 +87,47 @@ void destroy_network(void) {
     }
 
     for (int i=0; i<nn->n_layers; ++i) {
-        DMSG("destorying layer %d\n", i);
+        //DMSG("destorying layer %d\n", i);
         if (!nn->layers[i]) {
             break;
         }
         destroy_matrix(nn->layers[i]->weights);
-        DMSG("section %d", 1);
+        //DMSG("section %d", 1);
         destroy_matrix(nn->layers[i]->d_weights);
-        DMSG("section %d", 2);
+        //DMSG("section %d", 2);
         destroy_matrix(nn->layers[i]->bias);
-        DMSG("section %d", 3);
+        //DMSG("section %d", 3);
         destroy_matrix(nn->layers[i]->d_bias);
         TEE_InitSctrace();
         TEE_AddSctrace(1);
         TEE_GetSctrace(1);
-        DMSG("section %d", 4);
+        //DMSG("section %d", 4);
         for (int j=0; j < 10; ++j){
             for (int k=0; k<10; ++k) {
-                DMSG("%d \n", nn->layers[i]->inputs->vals[j][k]);
+                //DMSG("%d \n", nn->layers[i]->inputs->vals[j][k]);
             }
-            DMSG("\n");
+            //DMSG("\n");
         }
         
         destroy_matrix(nn->layers[i]->inputs);
-        DMSG("section %d", 5);
+        //DMSG("section %d", 5);
         destroy_matrix(nn->layers[i]->outputs);
-        DMSG("destoryed layer %d matrices\n", i);
+        //DMSG("destoryed layer %d matrices\n", i);
         TEE_Free(nn->layers[i]);
     }
-    DMSG("destorying layers struct\n");
+    //DMSG("destorying layers struct\n");
     TEE_Free(nn->layers);
 L1:
-    DMSG("destorying network\n");
+    //DMSG("destorying network\n");
     TEE_Free(nn);
-    DMSG("network destoryed!\n");
+    //DMSG("network destoryed!\n");
 }
 
 
 // input and labels are in row-major order, meaning 
 // each row corresponds to a particular training example. 
 double forward(matrix_t* features, matrix_t* labels) {
-    DMSG("starting forward propagation\n");
+    //DMSG("starting forward propagation\n");
     assert(nn != NULL && features != NULL && labels != NULL);
 
     matrix_t* outputs = features;
@@ -137,7 +138,7 @@ double forward(matrix_t* features, matrix_t* labels) {
         matrix_t* inputs = copy_matrix(outputs);
 
         layer_t* layer = nn->layers[i];
-        DMSG("rows: %d, cols: %d\n", inputs->rows, inputs->cols);
+        //DMSG("rows: %d, cols: %d\n", inputs->rows, inputs->cols);
         destroy_matrix(layer->inputs);
         destroy_matrix(layer->outputs);
         layer->inputs = inputs;
@@ -152,16 +153,16 @@ double forward(matrix_t* features, matrix_t* labels) {
         // easier to manage
         layer->outputs = outputs;
 
-        DMSG("propagated through layer %d\n", i);
+        //DMSG("propagated through layer %d\n", i);
     }
 
-    DMSG("completed forward propagaion\n");
+    //DMSG("completed forward propagaion\n");
     return nn->Loss(nn->layers[nn->n_layers - 1]->outputs, labels);
 }
 
 // labels are in row-major order
 void backward(matrix_t* labels) {
-    DMSG("starting back propagation\n");
+    //DMSG("starting back propagation\n");
     assert(nn != NULL && labels != NULL);
 
     // may need to load some sublayers here...
@@ -170,7 +171,7 @@ void backward(matrix_t* labels) {
     for (int i=(nn->n_layers - 1); i >= 0; --i) {
         // may need to load some layers here...
 
-        DMSG("backprop in layer %d\n", i);
+        //DMSG("backprop in layer %d\n", i);
 
         layer_t* layer = nn->layers[i];
 
@@ -218,21 +219,55 @@ void backward(matrix_t* labels) {
         destroy_matrix(d_outputs);
         d_outputs = d_inputs;
 
-        DMSG("input rows: %d, cols: %d\n", layer->inputs->rows, layer->inputs->cols);
-        DMSG("output rows: %d, cols: %d\n", layer->outputs->rows, layer->outputs->cols);
-        DMSG("d_weights rows: %d, cols: %d\n", layer->d_weights->rows, layer->d_weights->cols);
-        DMSG("d_bias rows: %d, cols: %d\n", layer->d_bias->rows, layer->inputs->cols);
+        // //DMSG("input rows: %d, cols: %d\n", layer->inputs->rows, layer->inputs->cols);
+        // //DMSG("output rows: %d, cols: %d\n", layer->outputs->rows, layer->outputs->cols);
+        // //DMSG("d_weights rows: %d, cols: %d\n", layer->d_weights->rows, layer->d_weights->cols);
+        // //DMSG("d_bias rows: %d, cols: %d\n", layer->d_bias->rows, layer->inputs->cols);
     }
     destroy_matrix(d_outputs);
 
-    DMSG("finished backprop!\n");
+    //DMSG("finished backprop!\n");
 
     return;
 }
 
 void train(int epochs) {
+    assert(nn != NULL && data_loader != NULL);
+
+    // start large training loop
     for (int epoch=0; epoch < epochs; ++epoch) {
+        
         double sum_loss = 0.0;
-        continue;
+        int batch_size = nn->batch_size;
+        int b = 0;
+        for (b=0; b < ((data_loader->N - 1) / batch_size + 1); ++b) { // iterate through batches
+            matrix_t* batch_features = copy_submatrix(data_loader->features, 
+                                                        b * batch_size, MIN((b + 1) * batch_size, 
+                                                                            data_loader->features->rows),
+                                                        0, data_loader->features->cols);
+            matrix_t* batch_labels = copy_submatrix(data_loader->labels, 
+                                                    b * batch_size, MIN((b + 1) * batch_size,
+                                                                        data_loader->labels->rows),
+                                                    0, data_loader->labels->cols);
+
+            double loss = forward(batch_features, batch_labels);
+            // if (isnan(loss) || isinf(loss)) {
+            //     //DMSG("abnormal loss in epoch %d, batch %d\n", epoch, b);
+            //     continue;
+            // }
+            
+            sum_loss += loss;
+
+            backward(batch_labels);
+            update();
+
+            destroy_matrix(batch_features);
+            destroy_matrix(batch_labels);
+
+            //DMSG("batch loss: %d\n", (int) loss);
+        }
+        sum_loss /= (b + 1);
+        DMSG("========= Epoch: %d, Loss: %d ==========", epoch, (int) sum_loss);
+
     }
 }

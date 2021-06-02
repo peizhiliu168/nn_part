@@ -34,7 +34,7 @@ void softmax_single(double* arr, int size) {
 		}
 	}
 
-    printf("max value is %f\n", m);
+    //printf("max value is %f\n", m);
 
 	sum = 0.0;
 	for (int i = 0; i < size; ++i) {
@@ -44,10 +44,10 @@ void softmax_single(double* arr, int size) {
 
 	}
 
-    printf("sum %f\n", sum);
+    //printf("sum %f\n", sum);
 	for (int i = 0; i < size; ++i) {
 		arr[i] /= sum;
-        printf("array value %f at index %d\n", arr[i], i);
+        //printf("array value %f at index %d\n", arr[i], i);
 	}
 }
 
@@ -57,7 +57,7 @@ void softmax(matrix_t* m) {
     assert(0 <= m->rows && 0 <= m->cols);
     
     for (int i=0; i < m->rows; ++i) {
-        DMSG("softmax single\n");
+        //DMSG("softmax single\n");
         softmax_single(m->vals[i], m->cols);
         
     }
@@ -67,17 +67,17 @@ void softmax(matrix_t* m) {
 // each row is prediction/truth for a 
 // single input
 double mean_cross_entropy_softmax(matrix_t* logits, matrix_t* labels) {
-    DMSG("finding mean cross entropy softmax\n");
+    //DMSG("finding mean cross entropy softmax\n");
     assert(logits->rows == labels->rows && logits->cols == labels->cols);
     
     matrix_t* pred = copy_matrix(logits);
     softmax(pred);
     for (int i=0; i < 10; ++i) {
-        DMSG("sample softmax: %lx", pred->vals[0][i]);
+        //DMSG("sample softmax: %lx", pred->vals[0][i]);
     }
-    DMSG("found softmax\n");
+    //DMSG("found softmax\n");
     apply_matrix(libm_log, pred);
-    DMSG("applied ln\n");
+    //DMSG("applied ln\n");
     double sum = 0;
     for (int i=0; i < pred->rows; ++i) {
         for (int j=0; j < pred->cols; ++j) {

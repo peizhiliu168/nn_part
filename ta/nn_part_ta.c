@@ -120,34 +120,35 @@ static TEE_Result inc_value(uint32_t param_types,
 	IMSG("Increase value to: %u", params[0].value.a);
 
 
-	printf("----------------------------------------------------\n");
-	for (int i=0; i < data_loader->N; ++i ) {
-		for (int j=0; j < data_loader->feature_size; ++j) {
-			printf("%ld ", data_loader->features->vals[i][j]);
-		}
-		printf("\n");
-	}
-	printf("\n");
+	// printf("----------------------------------------------------\n");
+	// for (int i=0; i < data_loader->N; ++i ) {
+	// 	for (int j=0; j < data_loader->feature_size; ++j) {
+	// 		printf("%ld ", data_loader->features->vals[i][j]);
+	// 	}
+	// 	printf("\n");
+	// }
+	// printf("\n");
 
 
-	for (int i=0; i < data_loader->N; ++i ) {
-		for (int j=0; j < data_loader->classes; ++j) {
-			printf("%ld ", data_loader->labels->vals[i][j]);
-		}
-		printf("\n");
-	}
-	printf("----------------------------------------------------\n");
+	// for (int i=0; i < data_loader->N; ++i ) {
+	// 	for (int j=0; j < data_loader->classes; ++j) {
+	// 		printf("%ld ", data_loader->labels->vals[i][j]);
+	// 	}
+	// 	printf("\n");
+	// }
+	// printf("----------------------------------------------------\n");
 
 	matrix_t* features = create_matrix_random(10, 784, 5, 10);
 	matrix_t* labels = create_matrix_identity(10);
-	for (int i=0; i < 10; ++i) {
-        DMSG("sample: %.6f\n", labels->vals[0][i]);
-    }
+	// for (int i=0; i < 10; ++i) {
+    //     DMSG("sample: %.6f\n", labels->vals[0][i]);
+    // }
 	DMSG("calculating number: %d\n", (int) ta_ln(1e-2));
-	//init_network();
-	double loss = forward(features, labels);
-	DMSG("cost: %d\n", (int) loss);
-	backward(labels);
+	init_network();
+	train(100);
+	// double loss = forward(features, labels);
+	// DMSG("cost: %d\n", (int) loss);
+	// backward(labels);
 
 	destroy_network();
 	destroy_matrix(features);
@@ -199,17 +200,17 @@ static TEE_Result send_data(uint32_t param_types, TEE_Param params[4]){
 	int label_rows = params[3].value.a;
 	int label_cols = params[3].value.b;
 
-	printf("----------------------------------------------------\n");
-	for (int i=0; i < feature_rows * feature_cols; ++i ) {
-		printf("%ld ", features[i]);
-	}
-	printf("\n");
+	// printf("----------------------------------------------------\n");
+	// for (int i=0; i < feature_rows * feature_cols; ++i ) {
+	// 	printf("%ld ", features[i]);
+	// }
+	// printf("\n");
 
 
-	for (int i=0; i < label_rows * label_cols; ++i ) {
-		printf("%ld ", labels[i]);
-	}
-	printf("----------------------------------------------------\n");
+	// for (int i=0; i < label_rows * label_cols; ++i ) {
+	// 	printf("%ld ", labels[i]);
+	// }
+	// printf("----------------------------------------------------\n");
 
 	matrix_t* wrapped_features = wrap_data(features, features_size, feature_rows, feature_cols);
 	matrix_t* wrapped_labels = wrap_data(labels, labels_size, label_rows, label_cols);
