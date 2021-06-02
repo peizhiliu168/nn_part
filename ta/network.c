@@ -14,12 +14,12 @@ network_t* nn;
 void init_network(void) {
     //DMSG("initializing network\n");
     // parameters we should pass in later
-    int n_layers = 5;
-    int layers[] = {784, 10, 10, 10, 10, 10};
+    int n_layers = 3;
+    int layers[] = {784, 128, 32, 10};
     int loaded_start = 0;
     int loaded_end = 4;
-    double learning_rate = 0.001;
-    int batch_size = 200;
+    double learning_rate = 0.01;
+    int batch_size = 100;
     optimizer_type_t optimizer = GD;
 
     // initialize original network
@@ -57,8 +57,9 @@ void init_network(void) {
         layer->loaded_start = 0;
         layer->loaded_end = layer->curr_neurons;
 
-        layer->weights = create_matrix_random(layer->prev_neurons, layer->curr_neurons, -1, 1);
-        layer->bias = create_matrix_random(1, layer->curr_neurons, -1, 1);
+        layer->weights = create_matrix_random(layer->prev_neurons, layer->curr_neurons, 
+                                        -ta_sqrt(2.0 / layer->prev_neurons), ta_sqrt(2.0 / layer->prev_neurons));
+        layer->bias = create_matrix(1, layer->curr_neurons);
         // layer->inputs = create_matrix(layer->prev_neurons, 1);
         // layer->error = create_matrix(layer->curr_neurons, 1);
 
@@ -264,10 +265,10 @@ void train(int epochs) {
             destroy_matrix(batch_features);
             destroy_matrix(batch_labels);
 
-            //DMSG("batch loss: %d\n", (int) loss);
+            DMSG("batch %d loss: %d\n", b, (int) loss);
         }
         sum_loss /= (b + 1);
-        DMSG("========= Epoch: %d, Loss: %d ==========", epoch, (int) sum_loss);
+        DMSG("========= Epoch: %d, Loss: %d ==========", epoch, (int) (100*sum_loss));
 
     }
 }

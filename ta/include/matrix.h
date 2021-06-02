@@ -17,6 +17,8 @@ void destroy_matrix(matrix_t* m);
 
 matrix_t* copy_matrix(matrix_t* m);
 
+void copy_over_matrix(matrix_t* m, matrix_t* result);
+
 void add_matrix_element(matrix_t* m, matrix_t* n, matrix_t* result);
 
 void subtract_matrix_element(matrix_t* m, matrix_t* n, matrix_t* result);

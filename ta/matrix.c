@@ -11,7 +11,7 @@ matrix_t* create_matrix(int rows, int cols) {
     if (!m){
         assert(false);
     }
-
+    // DMSG("create new matrix with %d rows and %d cols", rows, cols);
     m->rows = rows;
     m->cols = cols;
 
@@ -108,6 +108,18 @@ matrix_t* copy_matrix(matrix_t* m) {
     return copy;
 }
 
+// copies contents in matrix m over to resulting matrix
+void copy_over_matrix(matrix_t* m, matrix_t* result) { 
+    assert(m != NULL);
+    assert(m->rows == result->rows && m->cols == result->cols);
+
+    for (int i=0; i<m->rows; ++i) {
+        for (int j=0; j<m->cols; ++j) {
+            result->vals[i][j] = m->vals[i][j];
+        }
+    }
+}
+
 // add two matrices together
 void add_matrix_element(matrix_t* m, matrix_t* n, matrix_t* result) {
     if (!m || !n || !result) {
@@ -186,6 +198,8 @@ void mult_matrix(matrix_t* m, matrix_t* n, matrix_t* result) {
         assert(false);
     }
 
+    //matrix_t* temp = create_matrix(result->rows, result->cols);
+
     for (int i = 0; i < m->rows; ++i) {
       for (int j = 0; j < n->cols; ++j) {
          for (int k = 0; k < m->cols; ++k) {
@@ -193,6 +207,8 @@ void mult_matrix(matrix_t* m, matrix_t* n, matrix_t* result) {
          }
       }
    }
+
+   //copy_over_matrix(temp, result);
 }
 
 matrix_t* col_sum_matrix(matrix_t* m){
