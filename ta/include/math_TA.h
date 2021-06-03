@@ -1,6 +1,9 @@
 #ifndef TA_MY_TEST_H_MATH
 #define TA_MY_TEST_H_MATH
 
+#define MAX(X, Y) (((X) > (Y)) ? (X) : (Y))
+#define MIN(X, Y) (((X) > (Y)) ? (Y) : (X))
+
 /* math */
 #define PI 3.14159265358979323846
 #define e  2.7182818284590452354
