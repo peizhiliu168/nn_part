@@ -15,10 +15,10 @@ void init_network(void) {
     //DMSG("initializing network\n");
     // parameters we should pass in later
     int n_layers = 3;
-    int layers[] = {784, 128, 32, 10};
+    int layers[] = {784, 64, 32, 10};
     int loaded_start = 0;
     int loaded_end = 4;
-    double learning_rate = 0.01;
+    double learning_rate = 0.03;
     int batch_size = 100;
     optimizer_type_t optimizer = GD;
 
@@ -129,7 +129,7 @@ L1:
 // each row corresponds to a particular training example. 
 double forward(matrix_t* features, matrix_t* labels) {
     //DMSG("starting forward propagation\n");
-    assert(nn != NULL && features != NULL && labels != NULL);
+    assert(nn != NULL && features != NULL);
 
     matrix_t* outputs = features;
 
@@ -158,7 +158,11 @@ double forward(matrix_t* features, matrix_t* labels) {
     }
 
     //DMSG("completed forward propagaion\n");
-    return nn->Loss(nn->layers[nn->n_layers - 1]->outputs, labels);
+    if (labels) {
+        return nn->Loss(nn->layers[nn->n_layers - 1]->outputs, labels);
+    }
+
+    return -1.0;
 }
 
 // labels are in row-major order
@@ -232,6 +236,7 @@ void backward(matrix_t* labels) {
     return;
 }
 
+// trains the network with the optimizer
 void train(int epochs) {
     assert(nn != NULL && data_loader != NULL);
 
@@ -268,7 +273,39 @@ void train(int epochs) {
             DMSG("batch %d loss: %d\n", b, (int) loss);
         }
         sum_loss /= (b + 1);
-        DMSG("========= Epoch: %d, Loss: %d ==========", epoch, (int) (100*sum_loss));
+        matrix_t* y_hat = predict(data_loader->features);
+        double acc = accuracy(y_hat, data_loader->labels);
+        destroy_matrix(y_hat);
+        DMSG("========= Epoch: %d, Loss: %d, Accuracy: %d ==========", epoch, (int) (100*sum_loss), (int) (100*acc));
 
     }
+}
+
+// given a matrix of features in row-major order, 
+// use the model for inference
+matrix_t* predict(matrix_t* features) {
+    forward(features, NULL);
+    matrix_t* y_hat = copy_matrix(nn->layers[nn->n_layers - 1]->outputs);
+    softmax(y_hat); // changes y_hat
+    return y_hat;
+}
+
+// given predictions and labels, calculate accuracy
+double accuracy(matrix_t* y_hat, matrix_t* labels) {
+    assert(y_hat->rows == labels->rows && y_hat->cols == labels->cols);
+
+    double correct = 0;
+    for (int i=0; i < y_hat->rows; ++i) {
+        int max_index = 0;
+        double max_value = 0.0;
+        for (int j=0; j < y_hat->cols; ++j) {
+            if (y_hat->vals[i][j] > max_value) {
+                max_value = y_hat->vals[i][j];
+                max_index = j;
+            }
+        }
+        correct += labels->vals[i][max_index];
+    }
+
+    return correct / ((double) (y_hat->rows));
 }

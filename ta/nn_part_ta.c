@@ -145,7 +145,7 @@ static TEE_Result inc_value(uint32_t param_types,
     // }
 	DMSG("calculating number: %d\n", (int) ta_ln(1e-2));
 	init_network();
-	train(100);
+	train(50);
 	// double loss = forward(features, labels);
 	// DMSG("cost: %d\n", (int) loss);
 	// backward(labels);

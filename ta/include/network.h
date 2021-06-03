@@ -61,6 +61,10 @@ void backward(matrix_t* labels);
 
 void train(int epochs);
 
+matrix_t* predict(matrix_t* features);
+
+double accuracy(matrix_t* y_hat, matrix_t* labels);
+
 extern network_t* nn;
 
 #endif 
