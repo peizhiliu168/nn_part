@@ -6,6 +6,65 @@
 #include <storage.h>
 #include <network.h>
 
+void store_layer(layer_t* layer, int layer_number) {
+    // open object store
+    uint32_t storageID = TEE_STORAGE_PRIVATE;
+    int objectID = layer_number;
+    size_t objectIDLen = sizeof(layer_number);
+    uint32_t flags = TEE_DATA_FLAG_ACCESS_WRITE | TEE_DATA_FLAG_SHARE_WRITE;
+    TEE_ObjectHandle* handle;
+
+    TEE_Result res = TEE_OpenPersistentObject(storageID, &objectID,
+                                                objectIDLen, flags, handle);
+    assert(res == TEE_SUCCESS);
+
+    // get layer buffer
+    size_t buffer_size;
+    void* buffer = layer_to_buffer(layer, &buffer_size);
+
+    // write buffer to storage
+    res = TEE_WriteObjectData(handle, buffer, buffer_size);
+    assert(res == TEE_SUCCESS);
+
+    // free buffer
+    TEE_Free(buffer);
+
+    // free layer
+    destroy_layer(layer);
+}
+
+layer_t* read_layer(int layer_number) {
+    // open object store
+    uint32_t storageID = TEE_STORAGE_PRIVATE;
+    int objectID = layer_number;
+    size_t objectIDLen = sizeof(layer_number);
+    uint32_t flags = TEE_DATA_FLAG_ACCESS_READ | TEE_DATA_FLAG_SHARE_READ;
+    TEE_ObjectHandle* handle;
+
+    TEE_Result res = TEE_OpenPersistentObject(storageID, &objectID,
+                                                objectIDLen, flags, handle);
+    assert(res == TEE_SUCCESS);
+
+    // get object info (mainly to get size of object)
+    TEE_ObjectInfo info;
+    res = TEE_GetObjectInfo1(handle, &info);
+    assert(res == TEE_SUCCESS);
+    size_t size = info.dataSize;
+
+    // get layer buffer
+    size_t read_size;
+    void* buffer = TEE_Malloc(size, TEE_MALLOC_FILL_ZERO);
+    res = TEE_ReadObjectData(handle, buffer, size, &read_size);
+    assert(res == TEE_SUCCESS);
+    assert(read_size == size);
+
+    // convert layer buffer to layer
+    layer_t* layer = buffer_to_layer(buffer, size);
+    
+    TEE_Free(buffer);
+    return layer;
+}
+
 void* layer_to_buffer(layer_t* layer, size_t* out_size) {
     size_t int_type_size = 10 * sizeof(serialize_t);
     size_t int_data_size = 4 * sizeof(int);
@@ -179,6 +238,11 @@ int deserialize_int(void* buffer, size_t size, size_t* used) {
 
 // |<type>|<meta (rows,cols)>|<data>|
 void serialize_matrix(matrix_t* m, void* buffer, size_t size, size_t* used) {
+    // if matrix is not defined, create a  1x1 matrix as placeholder
+    if (!m) {
+        m = create_matrix(1,1);
+    }
+
     size_t type_size = sizeof(serialize_t);
     size_t row_size = sizeof(int), col_size = sizeof(int);
     size_t data_size = m->rows * m->cols * sizeof(double);
@@ -202,6 +266,8 @@ void serialize_matrix(matrix_t* m, void* buffer, size_t size, size_t* used) {
     }
 
     *used = total_size;
+
+    destroy_matrix(m);
 }
 
 matrix_t* deserialize_matrix(void* buffer, size_t size, size_t* used) {

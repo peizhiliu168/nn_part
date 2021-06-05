@@ -55,6 +55,8 @@ void init_network(void);
 
 void destroy_network(void);
 
+void destroy_layer(layer_t* layer);
+
 double forward(matrix_t* features, matrix_t* labels);
 
 void backward(matrix_t* labels);

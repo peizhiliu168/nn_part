@@ -89,32 +89,11 @@ void destroy_network(void) {
 
     for (int i=0; i<nn->n_layers; ++i) {
         //DMSG("destorying layer %d\n", i);
-        if (!nn->layers[i]) {
-            break;
+        layer_t* layer = nn->layers[i];
+        if (!layer) {
+            continue;
         }
-        destroy_matrix(nn->layers[i]->weights);
-        //DMSG("section %d", 1);
-        destroy_matrix(nn->layers[i]->d_weights);
-        //DMSG("section %d", 2);
-        destroy_matrix(nn->layers[i]->bias);
-        //DMSG("section %d", 3);
-        destroy_matrix(nn->layers[i]->d_bias);
-        TEE_InitSctrace();
-        TEE_AddSctrace(1);
-        TEE_GetSctrace(1);
-        //DMSG("section %d", 4);
-        for (int j=0; j < 10; ++j){
-            for (int k=0; k<10; ++k) {
-                //DMSG("%d \n", nn->layers[i]->inputs->vals[j][k]);
-            }
-            //DMSG("\n");
-        }
-        
-        destroy_matrix(nn->layers[i]->inputs);
-        //DMSG("section %d", 5);
-        destroy_matrix(nn->layers[i]->outputs);
-        //DMSG("destoryed layer %d matrices\n", i);
-        TEE_Free(nn->layers[i]);
+        destroy_layer(layer);
     }
     //DMSG("destorying layers struct\n");
     TEE_Free(nn->layers);
@@ -124,6 +103,30 @@ L1:
     //DMSG("network destoryed!\n");
 }
 
+void destroy_layer(layer_t* layer) {
+    if (!layer){
+        return;
+    }
+    if (layer->weights) {
+        destroy_matrix(layer->weights);
+    }
+    if (layer->d_weights) {
+        destroy_matrix(layer->d_weights);
+    }
+    if (layer->bias) {
+        destroy_matrix(layer->bias);
+    }
+    if (layer->d_bias) {
+        destroy_matrix(layer->d_bias);
+    }
+    if (layer->inputs) {
+        destroy_matrix(layer->inputs);
+    }
+    if (layer->outputs) {
+        destroy_matrix(layer->outputs);
+    }
+    TEE_Free(layer);
+}
 
 // input and labels are in row-major order, meaning 
 // each row corresponds to a particular training example. 

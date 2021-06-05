@@ -11,15 +11,15 @@ typedef enum {
     matrix_s,
 } serialize_t;
 
+void create_persistence(int layer_number, layer_t* layer);
+
+void store_layer(layer_t* layer, int layer_number);
+
+layer_t* read_layer(int layer_number);
+
 void* layer_to_buffer(layer_t* layer, size_t* out_size);
 
 layer_t* buffer_to_layer(void* buffer, size_t size);
-
-void store_layer_to_persistence(layer_t* layer);
-
-layer_t* read_persistence_object_to_layer(int layer_number);
-
-void create_persistence(int layer_number, layer_t* layer);
 
 void serialize_int(int data, void* buffer, size_t size, size_t* used);
 
