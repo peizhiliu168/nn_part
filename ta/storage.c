@@ -7,9 +7,10 @@
 #include <network.h>
 
 void* layer_to_buffer(layer_t* layer, size_t* out_size) {
-    size_t int_type_size = 4 * sizeof(serialize_t);
+    size_t int_type_size = 10 * sizeof(serialize_t);
     size_t int_data_size = 4 * sizeof(int);
     size_t matrix_type_size = 6 * sizeof(serialize_t);
+    size_t matrix_meta_size = 12 * sizeof(int);
     size_t matrix_data_size = sizeof(double) * (
                                                 layer->weights->rows * layer->weights->cols + 
                                                 layer->d_weights->rows * layer->d_weights->cols +
@@ -18,7 +19,7 @@ void* layer_to_buffer(layer_t* layer, size_t* out_size) {
                                                 layer->inputs->rows * layer->inputs->cols + 
                                                 layer->outputs->rows * layer->outputs->cols
                                                 );
-    size_t total_size = int_type_size + int_data_size + matrix_type_size + matrix_data_size;
+    size_t total_size = int_type_size + int_data_size + matrix_type_size + matrix_meta_size + matrix_data_size;
 
     uint8_t* buffer = TEE_Malloc(total_size, TEE_MALLOC_FILL_ZERO);
     assert(buffer != NULL);
@@ -205,7 +206,7 @@ void serialize_matrix(matrix_t* m, void* buffer, size_t size, size_t* used) {
 
 matrix_t* deserialize_matrix(void* buffer, size_t size, size_t* used) {
     size_t type_size = sizeof(serialize_t);
-    size_t row_size, col_size = sizeof(int);
+    size_t row_size = sizeof(int), col_size = sizeof(int);
     size_t inter_size = type_size + row_size + col_size;
 
     uint8_t* byte_buffer = (uint8_t*) buffer;
