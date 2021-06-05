@@ -6,14 +6,27 @@
 
 #include <network.h>
 
-void* layer_to_buffer(layer_t* layer);
+typedef enum {
+    int_s,
+    matrix_s,
+} serialize_t;
 
-layer_t* buffer_to_layer(void* buffer);
+void* layer_to_buffer(layer_t* layer, size_t* out_size);
+
+layer_t* buffer_to_layer(void* buffer, size_t size);
 
 void store_layer_to_persistence(layer_t* layer);
 
 layer_t* read_persistence_object_to_layer(int layer_number);
 
 void create_persistence(int layer_number, layer_t* layer);
+
+void serialize_int(int data, void* buffer, size_t size, size_t* used);
+
+int deserialize_int(void* buffer, size_t size, size_t* used);
+
+void serialize_matrix(matrix_t* m, void* buffer, size_t size, size_t* used);
+
+matrix_t* deserialize_matrix(void* buffer, size_t size, size_t* used);
 
 #endif

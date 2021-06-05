@@ -102,7 +102,7 @@ void TEEC_SendData(char* directory, int N,
 	res = TEEC_InvokeCommand(&sess, TA_NN_PART_CMD_SEND_DATA, &op, &origin);
 
 	if (res != TEEC_SUCCESS) {
-		errx(1, "TEEC_InvokeCommand(forward) failed 0x%x origin 0x%x",
+		errx(1, "TEEC_InvokeCommand(TA_NN_PART_CMD_SEND_DATA) failed 0x%x origin 0x%x",
          	res, origin);
 	}
 
