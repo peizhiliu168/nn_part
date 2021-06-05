@@ -6,43 +6,62 @@
 #include <storage.h>
 #include <network.h>
 
+// creates or overwrites existing secure object and then
+// stores serialized layer into storage
 void store_layer(layer_t* layer, int layer_number) {
-    // open object store
-    uint32_t storageID = TEE_STORAGE_PRIVATE;
-    int objectID = layer_number;
-    size_t objectIDLen = sizeof(layer_number);
-    uint32_t flags = TEE_DATA_FLAG_ACCESS_WRITE | TEE_DATA_FLAG_SHARE_WRITE;
-    TEE_ObjectHandle* handle;
-
-    TEE_Result res = TEE_OpenPersistentObject(storageID, &objectID,
-                                                objectIDLen, flags, handle);
-    assert(res == TEE_SUCCESS);
-
+    DMSG("attempt to store layer %d \n", layer_number);
     // get layer buffer
     size_t buffer_size;
     void* buffer = layer_to_buffer(layer, &buffer_size);
 
-    // write buffer to storage
-    res = TEE_WriteObjectData(handle, buffer, buffer_size);
+    DMSG("got buffer \n");
+
+    // create and overwrite previous object
+    uint32_t storageID = TEE_STORAGE_PRIVATE;
+    int objectID = layer_number;
+    size_t objectIDLen = sizeof(layer_number);
+    uint32_t flags = TEE_DATA_FLAG_ACCESS_WRITE | TEE_DATA_FLAG_SHARE_WRITE | 
+                    TEE_DATA_FLAG_ACCESS_READ | TEE_DATA_FLAG_SHARE_READ |
+                    TEE_DATA_FLAG_OVERWRITE;
+    TEE_ObjectHandle attributes = TEE_HANDLE_NULL;
+    TEE_ObjectHandle handle;
+
+    // for (int i=0; i < buffer_size; ++i) {
+    //     DMSG("%c\n", ((char*) buffer)[i]);
+    // }
+
+    DMSG("calling TEE_CreatePersistentObject\n");
+    TEE_Result res = TEE_CreatePersistentObject(storageID, &objectID,
+                                                objectIDLen, flags,
+                                                attributes, buffer,
+                                                buffer_size, &handle);
+    DMSG("res: %d\n", res);
     assert(res == TEE_SUCCESS);
+    DMSG("created presistent object for layer %d\n", layer_number);
+    TEE_CloseObject(handle);
 
     // free buffer
     TEE_Free(buffer);
+    DMSG("freed buffer\n");
 
     // free layer
     destroy_layer(layer);
+    DMSG("destroyed layer %d\n", layer_number);
 }
 
+// reads the secure object and deserializes layer
+// back into layer_t struct
 layer_t* read_layer(int layer_number) {
     // open object store
     uint32_t storageID = TEE_STORAGE_PRIVATE;
     int objectID = layer_number;
     size_t objectIDLen = sizeof(layer_number);
     uint32_t flags = TEE_DATA_FLAG_ACCESS_READ | TEE_DATA_FLAG_SHARE_READ;
-    TEE_ObjectHandle* handle;
+    TEE_ObjectHandle handle;
 
     TEE_Result res = TEE_OpenPersistentObject(storageID, &objectID,
-                                                objectIDLen, flags, handle);
+                                                objectIDLen, flags, &handle);
+    DMSG("res: %d\n", res);
     assert(res == TEE_SUCCESS);
 
     // get object info (mainly to get size of object)
@@ -55,16 +74,23 @@ layer_t* read_layer(int layer_number) {
     size_t read_size;
     void* buffer = TEE_Malloc(size, TEE_MALLOC_FILL_ZERO);
     res = TEE_ReadObjectData(handle, buffer, size, &read_size);
+    DMSG("res: %d\n", res);
     assert(res == TEE_SUCCESS);
     assert(read_size == size);
 
+    TEE_CloseObject(handle);
+
+    DMSG("starting buffer to layer conversion for %d\n", layer_number);
     // convert layer buffer to layer
     layer_t* layer = buffer_to_layer(buffer, size);
+    DMSG("completed buffer to layer conversion for %d\n", layer_number);
     
+    // free buffer
     TEE_Free(buffer);
     return layer;
 }
 
+// serialize layer into bytes in a buffered returned to the user
 void* layer_to_buffer(layer_t* layer, size_t* out_size) {
     size_t int_type_size = 10 * sizeof(serialize_t);
     size_t int_data_size = 4 * sizeof(int);
@@ -80,6 +106,7 @@ void* layer_to_buffer(layer_t* layer, size_t* out_size) {
                                                 );
     size_t total_size = int_type_size + int_data_size + matrix_type_size + matrix_meta_size + matrix_data_size;
 
+    DMSG("trying to allocate size %d for buffer\n", total_size);
     uint8_t* buffer = TEE_Malloc(total_size, TEE_MALLOC_FILL_ZERO);
     assert(buffer != NULL);
 
@@ -142,6 +169,7 @@ void* layer_to_buffer(layer_t* layer, size_t* out_size) {
     return start;
 }
 
+// deserializes buffer into layer_t struct returned to user
 layer_t* buffer_to_layer(void* buffer, size_t size){
     layer_t* layer = TEE_Malloc(sizeof(layer_t), TEE_MALLOC_FILL_ZERO);
     assert(layer != NULL);
@@ -266,8 +294,6 @@ void serialize_matrix(matrix_t* m, void* buffer, size_t size, size_t* used) {
     }
 
     *used = total_size;
-
-    destroy_matrix(m);
 }
 
 matrix_t* deserialize_matrix(void* buffer, size_t size, size_t* used) {

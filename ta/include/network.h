@@ -35,6 +35,7 @@ typedef struct network {
     layer_t** layers;
 
     // partial loading layer within network
+    int n_loaded; // maximum number of layers loaded in network
     int loaded_start;
     int loaded_end;
 
@@ -55,6 +56,8 @@ void init_network(void);
 
 void destroy_network(void);
 
+layer_t* create_layer(int prev_neurons, int curr_neurons, bool store, int layer_number);
+
 void destroy_layer(layer_t* layer);
 
 double forward(matrix_t* features, matrix_t* labels);
@@ -66,6 +69,8 @@ void train(int epochs);
 matrix_t* predict(matrix_t* features);
 
 double accuracy(matrix_t* y_hat, matrix_t* labels);
+
+void swap_layers(int start, int end, bool train);
 
 extern network_t* nn;
 
