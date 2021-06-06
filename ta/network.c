@@ -48,7 +48,7 @@ void init_network(void) {
         assert(false);    
     }
     for (int i=0; i<n_layers; ++i) {
-        DMSG("creating layer: %d\n", i);
+        //DMSG("creating layer: %d\n", i);
         if (i < nn->n_loaded) {
             // create layers that exist in the struct
             nn->layers[i] = create_layer(layers[i], layers[i+1], false, i);
@@ -125,30 +125,30 @@ void destroy_layer(layer_t* layer) {
         return;
     }
     if (layer->weights) {
-        DMSG("section 1\n");
+        //DMSG("section 1\n");
         destroy_matrix(layer->weights);
     }
     if (layer->d_weights) {
-        DMSG("section 2\n");
+        //DMSG("section 2\n");
         destroy_matrix(layer->d_weights);
     }
     if (layer->bias) {
-        DMSG("section 3\n");
+        // DMSG("section 3\n");
         destroy_matrix(layer->bias);
     }
     if (layer->d_bias) {
-        DMSG("section 3\n");
+        // DMSG("section 3\n");
         destroy_matrix(layer->d_bias);
     }
     if (layer->inputs) {
-        DMSG("section 4\n");
+        // DMSG("section 4\n");
         destroy_matrix(layer->inputs);
     }
     if (layer->outputs) {
-        DMSG("section 5\n");
+        // DMSG("section 5\n");
         destroy_matrix(layer->outputs);
     }
-    DMSG("section 6\n");
+    // DMSG("section 6\n");
     TEE_Free(layer);
 }
 
@@ -167,27 +167,27 @@ double forward(matrix_t* features, matrix_t* labels) {
         int start = l * nn->n_loaded;
         int end = MIN((l + 1) * nn->n_loaded, nn->n_layers);
         
-        DMSG("swapping layers %d to %d\n", start, end);
+        // DMSG("swapping layers %d to %d\n", start, end);
         swap_layers(start, end, training);
         
-        DMSG("forward layers %d to %d\n", start, end);
+        // DMSG("forward layers %d to %d\n", start, end);
         for (i=0; i < (end - start); ++i) {
             // matrix_t* inputs = copy_matrix(outputs);
             matrix_t* inputs = outputs;
 
             layer_t* layer = nn->layers[i];
             //DMSG("rows: %d, cols: %d\n", inputs->rows, inputs->cols);
-            DMSG("destroyed previous input and output\n");
+            // DMSG("destroyed previous input and output\n");
             destroy_matrix(layer->inputs);
             destroy_matrix(layer->outputs);
             layer->inputs = inputs;
 
-            DMSG("starting forward computation\n");
+            // DMSG("starting forward computation\n");
             outputs = create_matrix(inputs->rows, layer->curr_neurons);
             mult_matrix(inputs, layer->weights, outputs);
             add_matrix_element(outputs, layer->bias, outputs);
             apply_matrix(nn->Activation, outputs);
-            DMSG("finished forward computation\n");
+            // DMSG("finished forward computation\n");
 
             // note: the output pointer is not shared by the next layer
             // as the next layer's input, this makes things a lot 
@@ -200,7 +200,7 @@ double forward(matrix_t* features, matrix_t* labels) {
     }
     destroy_matrix(outputs);
 
-    DMSG("completed forward propagaion\n");
+    // DMSG("completed forward propagaion\n");
     if (training) {
         return nn->Loss(nn->layers[(nn->n_layers - 1) % nn->n_loaded]->outputs, labels);
     }
@@ -210,7 +210,7 @@ double forward(matrix_t* features, matrix_t* labels) {
 
 // labels are in row-major order
 void backward(matrix_t* labels) {
-    DMSG("starting back propagation\n");
+    // DMSG("starting back propagation\n");
     assert(nn != NULL && labels != NULL);
 
     // may need to load some layers here...
@@ -219,10 +219,10 @@ void backward(matrix_t* labels) {
         int start = nn->n_layers - MIN((l + 1) * nn->n_loaded, nn->n_layers);
         int end = nn->n_layers - l * nn->n_loaded;
         
-        DMSG("back swapping layers %d to %d\n", start, end);
+        // DMSG("back swapping layers %d to %d\n", start, end);
         swap_layers(start, end, true);
         
-        DMSG("back layers %d to %d\n", start, end);
+        // DMSG("back layers %d to %d\n", start, end);
 
         for (int i=((end - start) - 1); i >= 0; --i) {
             // may need to load some layers here...
