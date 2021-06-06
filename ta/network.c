@@ -18,7 +18,7 @@ void init_network(void) {
     int n_layers = 3;
     int layers[] = {784, 64, 32, 10};
     int loaded_start = 0;
-    int n_loaded = 1;
+    int n_loaded = 2;
     double learning_rate = 0.03;
     int batch_size = 100;
     optimizer_type_t optimizer = GD;
@@ -377,14 +377,14 @@ void swap_layers(int start, int end, bool train) {
 
     for (int i=0; i < nn->n_loaded; ++i) {
         int store_index = nn->loaded_start + i;
-        if (train) { // only store layers when we are in training mode
-            if (store_index < nn->loaded_end) {
+        if (store_index < nn->loaded_end) {
+            if (train) { // only store layers when we are in training mode
                 store_layer(nn->layers[i], store_index);
+            } else { // if we're in predicting mode, just destroy layer without storing
+                destroy_layer(nn->layers[i]);
             }
-        } else { // if we're in predicting mode, just destroy layer without storing
-            destroy_layer(nn->layers[i]);
         }
-
+        
         int load_index = start + i;
         if (load_index < end) {
             nn->layers[i] = read_layer(load_index);
