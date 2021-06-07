@@ -19,9 +19,9 @@ void init_network(void) {
     int n_layers = 3;
     int layers[] = {784, 64, 32, 10};
     int loaded_start = 0;
-    int n_loaded = 3;
-    double learning_rate = 0.01;
-    int batch_size = 1;
+    int n_loaded = 2;
+    double learning_rate = 0.03;
+    int batch_size = 100;
     optimizer_type_t optimizer = GD;
 
     // initialize original network
@@ -362,6 +362,28 @@ matrix_t* predict(matrix_t* features) {
     softmax(y_hat); // changes y_hat
     return y_hat;
 }
+
+// given a matrix of features in row-major order, 
+// use the model for inference
+// matrix_t* predict(matrix_t* features) {
+//     // DMSG("creating matrix\n");
+//     matrix_t* y_hat = create_matrix(features->rows, data_loader->classes);
+
+//     for (int i=0; i < features->rows; ++i) {
+//         // DMSG("iterated through feature %d\n", i);
+//         matrix_t* feature = copy_submatrix(features, i, i+1, 0, features->cols);
+//         forward(feature, NULL);
+//         for (int j=0; j < data_loader->classes; ++j) {
+//             y_hat->vals[i][j] = nn->layers[(nn->n_layers - 1) % nn->n_loaded]->outputs->vals[0][j];
+//         }
+//         destroy_matrix(feature);
+//     }
+//     // forward(features, NULL);
+//     // matrix_t* y_hat = copy_matrix(nn->layers[(nn->n_layers - 1) % nn->n_loaded]->outputs);
+//     softmax(y_hat); // changes y_hat
+//     return y_hat;
+// }
+
 
 // given predictions and labels, calculate accuracy
 double accuracy(matrix_t* y_hat, matrix_t* labels) {
