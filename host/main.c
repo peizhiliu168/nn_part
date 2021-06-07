@@ -29,6 +29,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <sys/syscall.h>
 
 /* OP-TEE TEE client API (built by optee_client) */
 #include <tee_client_api.h>
@@ -38,11 +39,14 @@
 #include <data.h>
 #include <matrix.h>
 
+#define ADD_SCTRACE_NUMBER 440
+
 TEEC_Session sess;
 
 void TEEC_SendData(char* directory, int N,
               int w, int h, int c, 
               char* identifier, int classes) {
+	syscall(ADD_SCTRACE_NUMBER, 555);
 	// setup RPC params
 	TEEC_Operation op;
     uint32_t origin;

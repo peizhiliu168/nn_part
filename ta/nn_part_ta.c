@@ -85,7 +85,7 @@ TEE_Result TA_OpenSessionEntryPoint(uint32_t param_types,
 	 * specify any means to logging from a TA.
 	 */
 	IMSG("Hello World!\n");
-
+	TEE_InitSctrace();
 	init_network();
 
 	/* If return value != TEE_SUCCESS the session will not be created. */
@@ -144,12 +144,13 @@ static TEE_Result inc_value(uint32_t param_types,
     //     DMSG("sample: %.6f\n", labels->vals[0][i]);
     // }
 	DMSG("calculating number: %d\n", (int) ta_ln(1e-2));
-	train(50);
+	train(10);
 	// double loss = forward(features, labels);
 	// DMSG("cost: %d\n", (int) loss);
 	// backward(labels);
 
 	destroy_network();
+	TEE_GetSctrace(4);
 	destroy_matrix(features);
 	destroy_matrix(labels);
 
@@ -217,6 +218,7 @@ static TEE_Result send_data(uint32_t param_types, TEE_Param params[4]){
 	init_data(wrapped_features, wrapped_labels, nn->batch_size);
 	DMSG("send_data has finished");
 
+	TEE_AddSctrace(555);
 	return TEE_SUCCESS;
 }
 

@@ -13,14 +13,15 @@
 network_t* nn;
 
 void init_network(void) {
+    TEE_AddSctrace(0);
     //DMSG("initializing network\n");
     // parameters we should pass in later
     int n_layers = 3;
     int layers[] = {784, 64, 32, 10};
     int loaded_start = 0;
-    int n_loaded = 2;
-    double learning_rate = 0.03;
-    int batch_size = 100;
+    int n_loaded = 3;
+    double learning_rate = 0.01;
+    int batch_size = 1;
     optimizer_type_t optimizer = GD;
 
     // initialize original network
@@ -66,6 +67,7 @@ void init_network(void) {
 
     //DMSG("finished initializing network\n");
     //return nn;
+    TEE_AddSctrace(0);
 }
 
 void destroy_network(void) {
@@ -155,6 +157,7 @@ void destroy_layer(layer_t* layer) {
 // input and labels are in row-major order, meaning 
 // each row corresponds to a particular training example. 
 double forward(matrix_t* features, matrix_t* labels) {
+    TEE_AddSctrace(23);
     //DMSG("starting forward propagation\n");
     assert(nn != NULL && features != NULL);
 
@@ -171,7 +174,9 @@ double forward(matrix_t* features, matrix_t* labels) {
         swap_layers(start, end, training);
         
         // DMSG("forward layers %d to %d\n", start, end);
+        TEE_AddSctrace(230);
         for (i=0; i < (end - start); ++i) {
+            TEE_AddSctrace(231);
             // matrix_t* inputs = copy_matrix(outputs);
             matrix_t* inputs = outputs;
 
@@ -196,21 +201,25 @@ double forward(matrix_t* features, matrix_t* labels) {
 
             //DMSG("propagated through layer %d\n", i);
             outputs = copy_matrix(outputs);
+            TEE_AddSctrace(231);
         }
     }
     destroy_matrix(outputs);
+    TEE_AddSctrace(230);
 
     // DMSG("completed forward propagaion\n");
     if (training) {
+        TEE_AddSctrace(23);
         return nn->Loss(nn->layers[(nn->n_layers - 1) % nn->n_loaded]->outputs, labels);
     }
-
+    TEE_AddSctrace(23);
     return -1.0;
 }
 
 // labels are in row-major order
 void backward(matrix_t* labels) {
     // DMSG("starting back propagation\n");
+    TEE_AddSctrace(44);
     assert(nn != NULL && labels != NULL);
 
     // may need to load some layers here...
@@ -223,8 +232,9 @@ void backward(matrix_t* labels) {
         swap_layers(start, end, true);
         
         // DMSG("back layers %d to %d\n", start, end);
-
+        TEE_AddSctrace(440);
         for (int i=((end - start) - 1); i >= 0; --i) {
+            TEE_AddSctrace(441);
             // may need to load some layers here...
 
             //DMSG("backprop in layer %d\n", i);
@@ -279,26 +289,31 @@ void backward(matrix_t* labels) {
             // //DMSG("output rows: %d, cols: %d\n", layer->outputs->rows, layer->outputs->cols);
             // //DMSG("d_weights rows: %d, cols: %d\n", layer->d_weights->rows, layer->d_weights->cols);
             // //DMSG("d_bias rows: %d, cols: %d\n", layer->d_bias->rows, layer->inputs->cols);
+            TEE_AddSctrace(441);
         }
     }
     destroy_matrix(d_outputs);
+    TEE_AddSctrace(440);
 
     //DMSG("finished backprop!\n");
-
+    TEE_AddSctrace(44);
     return;
 }
 
 // trains the network with the optimizer
 void train(int epochs) {
     assert(nn != NULL && data_loader != NULL);
+    TEE_AddSctrace(999);
 
     // start large training loop
     for (int epoch=0; epoch < epochs; ++epoch) {
+        TEE_AddSctrace(66);
         
         double sum_loss = 0.0;
         int batch_size = nn->batch_size;
         int b = 0;
         for (b=0; b < ((data_loader->N - 1) / batch_size + 1); ++b) { // iterate through batches
+            TEE_AddSctrace(88);
             matrix_t* batch_features = copy_submatrix(data_loader->features, 
                                                         b * batch_size, MIN((b + 1) * batch_size, 
                                                                             data_loader->features->rows),
@@ -322,20 +337,26 @@ void train(int epochs) {
             destroy_matrix(batch_features);
             destroy_matrix(batch_labels);
 
+            TEE_AddSctrace(88);
             DMSG("batch %d loss: %d\n", b, (int) loss);
         }
         sum_loss /= (b + 1);
         matrix_t* y_hat = predict(data_loader->features);
         double acc = accuracy(y_hat, data_loader->labels);
         destroy_matrix(y_hat);
+        TEE_AddSctrace(66);
         DMSG("========= Epoch: %d, Loss: %d, Accuracy: %d ==========", epoch, (int) (100*sum_loss), (int) (100*acc));
-
     }
+    TEE_AddSctrace(999);
 }
 
 // given a matrix of features in row-major order, 
 // use the model for inference
 matrix_t* predict(matrix_t* features) {
+    // for (int i=0; i < features->rows; ++i) {
+
+    //     forward()
+    // }
     forward(features, NULL);
     matrix_t* y_hat = copy_matrix(nn->layers[(nn->n_layers - 1) % nn->n_loaded]->outputs);
     softmax(y_hat); // changes y_hat

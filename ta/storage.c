@@ -9,10 +9,13 @@
 // creates or overwrites existing secure object and then
 // stores serialized layer into storage
 void store_layer(layer_t* layer, int layer_number) {
+    TEE_AddSctrace(69);
     // DMSG("attempt to store layer %d \n", layer_number);
     // get layer buffer
     size_t buffer_size;
+    TEE_AddSctrace(690);
     void* buffer = layer_to_buffer(layer, &buffer_size);
+    TEE_AddSctrace(690);
 
     // DMSG("got buffer \n");
 
@@ -31,10 +34,12 @@ void store_layer(layer_t* layer, int layer_number) {
     // }
 
     // DMSG("calling TEE_CreatePersistentObject\n");
+    TEE_AddSctrace(691);
     TEE_Result res = TEE_CreatePersistentObject(storageID, &objectID,
                                                 objectIDLen, flags,
                                                 attributes, buffer,
                                                 buffer_size, &handle);
+    TEE_AddSctrace(691);
     // DMSG("res: %d\n", res);
     assert(res == TEE_SUCCESS);
     // DMSG("created presistent object for layer %d\n", layer_number);
@@ -47,11 +52,13 @@ void store_layer(layer_t* layer, int layer_number) {
     // free layer
     destroy_layer(layer);
     // DMSG("destroyed layer %d\n", layer_number);
+    TEE_AddSctrace(69);
 }
 
 // reads the secure object and deserializes layer
 // back into layer_t struct
 layer_t* read_layer(int layer_number) {
+    TEE_AddSctrace(420);
     // open object store
     uint32_t storageID = TEE_STORAGE_PRIVATE;
     int objectID = layer_number;
@@ -73,7 +80,9 @@ layer_t* read_layer(int layer_number) {
     // get layer buffer
     size_t read_size;
     void* buffer = TEE_Malloc(size, TEE_MALLOC_FILL_ZERO);
+    TEE_AddSctrace(4200);
     res = TEE_ReadObjectData(handle, buffer, size, &read_size);
+    TEE_AddSctrace(4200);
     // DMSG("res: %d\n", res);
     assert(res == TEE_SUCCESS);
     assert(read_size == size);
@@ -82,11 +91,14 @@ layer_t* read_layer(int layer_number) {
 
     // DMSG("starting buffer to layer conversion for %d\n", layer_number);
     // convert layer buffer to layer
+    TEE_AddSctrace(4201);
     layer_t* layer = buffer_to_layer(buffer, size);
+    TEE_AddSctrace(4201);
     // DMSG("completed buffer to layer conversion for %d\n", layer_number);
     
     // free buffer
     TEE_Free(buffer);
+    TEE_AddSctrace(420);
     return layer;
 }
 
