@@ -1,5 +1,6 @@
-#include <tee_internal_api.h>
-#include <tee_internal_api_extensions.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <stdio.h>
 
 #include <network.h>
 #include <loss.h>
@@ -8,24 +9,22 @@
 #include <optimizer.h>
 #include <data.h>
 #include <math_TA.h>
-#include <storage.h>
 
 network_t* nn;
 
 void init_network(void) {
-    TEE_AddSctrace(0);
     //DMSG("initializing network\n");
     // parameters we should pass in later
     int n_layers = 3;
     int layers[] = {784, 64, 32, 10};
     int loaded_start = 0;
-    int n_loaded = 1;
+    int n_loaded = 3;
     double learning_rate = 0.03;
     int batch_size = 50;
     optimizer_type_t optimizer = GD;
 
     // initialize original network
-    nn = TEE_Malloc(sizeof(network_t), TEE_MALLOC_FILL_ZERO);
+    nn = calloc(1, sizeof(network_t));
     if (!nn) {
         assert(false);
     }
@@ -43,7 +42,7 @@ void init_network(void) {
     assert(nn->n_layers >= nn->n_loaded);
 
     // initialize network layers
-    nn->layers = TEE_Malloc(sizeof(layer_t*) * nn->n_loaded, TEE_MALLOC_FILL_ZERO);
+    nn->layers = calloc(nn->n_loaded, sizeof(layer_t*));
     if (!nn->layers) {
         destroy_network();
         assert(false);    
@@ -52,10 +51,10 @@ void init_network(void) {
         //DMSG("creating layer: %d\n", i);
         if (i < nn->n_loaded) {
             // create layers that exist in the struct
-            nn->layers[i] = create_layer(layers[i], layers[i+1], false, i);
+            nn->layers[i] = create_layer(layers[i], layers[i+1], 0, i);
         } else {
             // create layers that exist in storage
-            create_layer(layers[i], layers[i+1], true, i);
+            create_layer(layers[i], layers[i+1], 1, i);
         }       
     }
 
@@ -67,7 +66,6 @@ void init_network(void) {
 
     //DMSG("finished initializing network\n");
     //return nn;
-    TEE_AddSctrace(0);
 }
 
 void destroy_network(void) {
@@ -89,15 +87,15 @@ void destroy_network(void) {
         destroy_layer(layer);
     }
     //DMSG("destorying layers struct\n");
-    TEE_Free(nn->layers);
+    free(nn->layers);
 L1:
     //DMSG("destorying network\n");
-    TEE_Free(nn);
+    free(nn);
     //DMSG("network destoryed!\n");
 }
 
-layer_t* create_layer(int prev_neurons, int curr_neurons, bool store, int layer_number) {
-    layer_t* layer = TEE_Malloc(sizeof(layer_t), TEE_MALLOC_FILL_ZERO);
+layer_t* create_layer(int prev_neurons, int curr_neurons, int store, int layer_number) {
+    layer_t* layer = calloc(1, sizeof(layer_t));
     assert(layer != NULL);
 
     layer->prev_neurons = prev_neurons;
@@ -116,7 +114,8 @@ layer_t* create_layer(int prev_neurons, int curr_neurons, bool store, int layer_
     layer->outputs = create_matrix(1,1); // placeholder
 
     if (store) {
-        store_layer(layer, layer_number);
+        //store_layer(layer, layer_number);
+        assert(0);
         return NULL;
     }
     return layer;
@@ -151,17 +150,16 @@ void destroy_layer(layer_t* layer) {
         destroy_matrix(layer->outputs);
     }
     // DMSG("section 6\n");
-    TEE_Free(layer);
+    free(layer);
 }
 
 // input and labels are in row-major order, meaning 
 // each row corresponds to a particular training example. 
 double forward(matrix_t* features, matrix_t* labels) {
-    TEE_AddSctrace(23);
     //DMSG("starting forward propagation\n");
     assert(nn != NULL && features != NULL);
 
-    bool training = labels != NULL;
+    int training = labels != NULL;
 
     matrix_t* outputs = copy_matrix(features);
 
@@ -174,9 +172,7 @@ double forward(matrix_t* features, matrix_t* labels) {
         swap_layers(start, end, training);
         
         // DMSG("forward layers %d to %d\n", start, end);
-        TEE_AddSctrace(230);
         for (i=0; i < (end - start); ++i) {
-            TEE_AddSctrace(231);
             // matrix_t* inputs = copy_matrix(outputs);
             matrix_t* inputs = outputs;
 
@@ -201,25 +197,23 @@ double forward(matrix_t* features, matrix_t* labels) {
 
             //DMSG("propagated through layer %d\n", i);
             outputs = copy_matrix(outputs);
-            TEE_AddSctrace(231);
         }
     }
     destroy_matrix(outputs);
-    TEE_AddSctrace(230);
 
     // DMSG("completed forward propagaion\n");
     if (training) {
-        TEE_AddSctrace(23);
+        
         return nn->Loss(nn->layers[(nn->n_layers - 1) % nn->n_loaded]->outputs, labels);
     }
-    TEE_AddSctrace(23);
+    
     return -1.0;
 }
 
 // labels are in row-major order
 void backward(matrix_t* labels) {
     // DMSG("starting back propagation\n");
-    TEE_AddSctrace(44);
+    
     assert(nn != NULL && labels != NULL);
 
     // may need to load some layers here...
@@ -229,12 +223,12 @@ void backward(matrix_t* labels) {
         int end = nn->n_layers - l * nn->n_loaded;
         
         // DMSG("back swapping layers %d to %d\n", start, end);
-        swap_layers(start, end, true);
+        swap_layers(start, end, 1);
         
         // DMSG("back layers %d to %d\n", start, end);
-        TEE_AddSctrace(440);
+        
         for (int i=((end - start) - 1); i >= 0; --i) {
-            TEE_AddSctrace(441);
+            
             // may need to load some layers here...
 
             //DMSG("backprop in layer %d\n", i);
@@ -289,31 +283,31 @@ void backward(matrix_t* labels) {
             // //DMSG("output rows: %d, cols: %d\n", layer->outputs->rows, layer->outputs->cols);
             // //DMSG("d_weights rows: %d, cols: %d\n", layer->d_weights->rows, layer->d_weights->cols);
             // //DMSG("d_bias rows: %d, cols: %d\n", layer->d_bias->rows, layer->inputs->cols);
-            TEE_AddSctrace(441);
+            
         }
     }
     destroy_matrix(d_outputs);
-    TEE_AddSctrace(440);
+    
 
     //DMSG("finished backprop!\n");
-    TEE_AddSctrace(44);
+    
     return;
 }
 
 // trains the network with the optimizer
 void train(int epochs) {
     assert(nn != NULL && data_loader != NULL);
-    TEE_AddSctrace(999);
+    
 
     // start large training loop
     for (int epoch=0; epoch < epochs; ++epoch) {
-        TEE_AddSctrace(66);
+        
         
         double sum_loss = 0.0;
         int batch_size = nn->batch_size;
         int b = 0;
         for (b=0; b < ((data_loader->N - 1) / batch_size + 1); ++b) { // iterate through batches
-            TEE_AddSctrace(88);
+            
             matrix_t* batch_features = copy_submatrix(data_loader->features, 
                                                         b * batch_size, MIN((b + 1) * batch_size, 
                                                                             data_loader->features->rows),
@@ -337,17 +331,17 @@ void train(int epochs) {
             destroy_matrix(batch_features);
             destroy_matrix(batch_labels);
 
-            TEE_AddSctrace(88);
-            DMSG("batch %d loss: %d\n", b, (int) loss);
+            
+            printf("batch %d loss: %f\n", b, loss);
         }
         sum_loss /= (b + 1);
         matrix_t* y_hat = predict(data_loader->features);
         double acc = accuracy(y_hat, data_loader->labels);
         destroy_matrix(y_hat);
-        TEE_AddSctrace(66);
-        DMSG("========= Epoch: %d, Loss: %d, Accuracy: %d ==========", epoch, (int) (100*sum_loss), (int) (100*acc));
+        
+        printf("========= Epoch: %d, Loss: %f, Accuracy: %f ==========", epoch, sum_loss, acc);
     }
-    TEE_AddSctrace(999);
+    
 }
 
 // given a matrix of features in row-major order, 
@@ -407,33 +401,34 @@ double accuracy(matrix_t* y_hat, matrix_t* labels) {
 
 // sawp the current layers in nn with the new layers
 // start layer is inclusive and end layer is exclusive
-void swap_layers(int start, int end, bool train) {
+void swap_layers(int start, int end, int train) {
     assert(nn != NULL);
 
     if (start == nn->loaded_start && end == nn->loaded_end) {
         return;
     }
 
-    assert(start >= 0 && start < nn->n_layers);
-    assert(end > start && end <= nn->n_layers);
-    assert((end - start) <= nn->n_loaded);
+    // assert(start >= 0 && start < nn->n_layers);
+    // assert(end > start && end <= nn->n_layers);
+    // assert((end - start) <= nn->n_loaded);
 
-    for (int i=0; i < nn->n_loaded; ++i) {
-        int store_index = nn->loaded_start + i;
-        if (store_index < nn->loaded_end) {
-            if (train) { // only store layers when we are in training mode
-                store_layer(nn->layers[i], store_index);
-            } else { // if we're in predicting mode, just destroy layer without storing
-                destroy_layer(nn->layers[i]);
-            }
-        }
+    // for (int i=0; i < nn->n_loaded; ++i) {
+    //     int store_index = nn->loaded_start + i;
+    //     if (store_index < nn->loaded_end) {
+    //         if (train) { // only store layers when we are in training mode
+    //             store_layer(nn->layers[i], store_index);
+    //         } else { // if we're in predicting mode, just destroy layer without storing
+    //             destroy_layer(nn->layers[i]);
+    //         }
+    //     }
         
-        int load_index = start + i;
-        if (load_index < end) {
-            nn->layers[i] = read_layer(load_index);
-        }
-    }
+    //     int load_index = start + i;
+    //     if (load_index < end) {
+    //         nn->layers[i] = read_layer(load_index);
+    //     }
+    // }
     
-    nn->loaded_start = start;
-    nn->loaded_end = end;
+    // nn->loaded_start = start;
+    // nn->loaded_end = end;
+    assert(0);
 }

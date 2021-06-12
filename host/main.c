@@ -30,18 +30,51 @@
 #include <string.h>
 #include <stdlib.h>
 #include <sys/syscall.h>
+#include <sys/time.h>
 
 /* OP-TEE TEE client API (built by optee_client) */
 #include <tee_client_api.h>
 
 /* For the UUID (found in the TA's h-file(s)) */
 #include <nn_part_ta.h>
+#include <network.h>
+#include <math_TA.h>
 #include <data.h>
 #include <matrix.h>
 
-#define ADD_SCTRACE_NUMBER 440
+#define ADD_SCTRACE_NUMBER 436
+#define RUN_REE 0
 
 TEEC_Session sess;
+
+void ree_nn(void) {
+	int N = 3000;
+	int w = 28;
+	int h = 28;
+	int c = 1;
+	int classes = 10;
+	char identifier[] = "_c";
+	char directory[] = "/root/mnist/images";
+
+
+	struct timeval stop, start;
+	gettimeofday(&start, NULL);
+
+	matrix_t* features = create_matrix(N, w*h*c);
+	matrix_t* labels = create_matrix(N, classes);
+	get_data_matrix_from_image_dir(directory, N,
+									w, h, c, 
+									identifier, classes,
+									features, labels);
+
+	init_network();
+	init_data(features, labels, nn->batch_size);
+	train(10);
+	destroy_network();
+	
+    gettimeofday(&stop, NULL);
+	printf("took %lu us\n", (stop.tv_sec - start.tv_sec) * 1000000 + stop.tv_usec - start.tv_usec); 
+}
 
 void TEEC_SendData(char* directory, int N,
               int w, int h, int c, 
@@ -138,6 +171,11 @@ void TEEC_SendData(char* directory, int N,
 
 int main(void)
 {
+	if (RUN_REE) {
+		ree_nn();
+		return;
+	}
+
 	TEEC_Result res;
 	TEEC_Context ctx;
 	TEEC_Operation op;

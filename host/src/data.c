@@ -7,6 +7,10 @@
 #include <ctype.h>
 #include <string.h>
 
+#include <assert.h>
+
+#include <matrix.h>
+
 image make_empty_image(int w, int h, int c)
 {
     image out;
@@ -178,4 +182,40 @@ void get_data_matrix_from_image_dir(char* directory, int N,
 		}
 		closedir(d);
 	}
+}
+
+
+
+
+data_t* data_loader;
+
+void init_data(matrix_t* features, matrix_t* labels, int batch_size) {
+    assert(features->rows == labels->rows);
+    
+    if (data_loader){
+        destroy_data();
+    }
+
+    data_loader = calloc(1, sizeof(data_t));
+    
+    data_loader->features = features;
+    data_loader->labels = labels;
+    data_loader->N = features->rows;
+    data_loader->feature_size = features->cols;
+    data_loader->classes = labels->cols;
+    data_loader->batch_size = batch_size;
+    data_loader->start = 0;
+    data_loader->end = data_loader->start + batch_size;
+}
+
+// destory the data loader
+void destroy_data(void) {
+    if (!data_loader){
+        return;
+    }
+
+    destroy_matrix(data_loader->features);
+    destroy_matrix(data_loader->labels);
+
+    free(data_loader);
 }

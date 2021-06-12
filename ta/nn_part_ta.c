@@ -138,8 +138,6 @@ static TEE_Result inc_value(uint32_t param_types,
 	// }
 	// printf("----------------------------------------------------\n");
 
-	matrix_t* features = create_matrix_random(10, 784, 5, 10);
-	matrix_t* labels = create_matrix_identity(10);
 	// for (int i=0; i < 10; ++i) {
     //     DMSG("sample: %.6f\n", labels->vals[0][i]);
     // }
@@ -151,8 +149,6 @@ static TEE_Result inc_value(uint32_t param_types,
 
 	destroy_network();
 	TEE_GetSctrace(4);
-	destroy_matrix(features);
-	destroy_matrix(labels);
 
 	return TEE_SUCCESS;
 }
