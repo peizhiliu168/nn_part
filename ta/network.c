@@ -224,9 +224,9 @@ void backward(matrix_t* labels) {
 
     // may need to load some layers here...
     matrix_t* d_outputs = nn->Loss_d(nn->layers[(nn->n_layers - 1) % nn->n_loaded]->outputs, labels);
-    for (int l=0; l < ((nn->n_layers - 1) / nn->n_loaded + 1); ++l) {
-        int start = nn->n_layers - MIN((l + 1) * nn->n_loaded, nn->n_layers);
-        int end = nn->n_layers - l * nn->n_loaded;
+    for (int l=((nn->n_layers - 1) / nn->n_loaded + 1) - 1; l <= 0; --l) {
+        int start = l * nn->n_loaded;
+        int end = MIN((l + 1) * nn->n_loaded, nn->n_layers);
         
         // DMSG("back swapping layers %d to %d\n", start, end);
         swap_layers(start, end, true);
