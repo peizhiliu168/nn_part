@@ -224,7 +224,7 @@ void backward(matrix_t* labels) {
 
     // may need to load some layers here...
     matrix_t* d_outputs = nn->Loss_d(nn->layers[(nn->n_layers - 1) % nn->n_loaded]->outputs, labels);
-    for (int l=((nn->n_layers - 1) / nn->n_loaded + 1) - 1; l <= 0; --l) {
+    for (int l=((nn->n_layers - 1) / nn->n_loaded + 1) - 1; l >= 0; --l) {
         int start = l * nn->n_loaded;
         int end = MIN((l + 1) * nn->n_loaded, nn->n_layers);
         
@@ -237,7 +237,7 @@ void backward(matrix_t* labels) {
             TEE_AddSctrace(441);
             // may need to load some layers here...
 
-            //DMSG("backprop in layer %d\n", i);
+            // DMSG("backprop in layer %d\n", i);
 
             layer_t* layer = nn->layers[i];
 
@@ -280,6 +280,22 @@ void backward(matrix_t* labels) {
             div_matrix_element(layer->d_bias, n, layer->d_bias);
             div_matrix_element(layer->d_weights, n, layer->d_weights);
             destroy_matrix(n);
+
+            
+            // Update the matrices
+            matrix_t* learning_rate_mat = create_matrix(1,1);
+            learning_rate_mat->vals[0][0] = nn->learning_rate;
+
+            // layer.w -= layer.d_w * self.learning_rate
+            mult_matrix_element(layer->d_weights, learning_rate_mat, layer->d_weights);
+            subtract_matrix_element(layer->weights, layer->d_weights, layer->weights);
+
+            // layer.b -= layer.d_b * self.learning_rate
+            mult_matrix_element(layer->d_bias, learning_rate_mat, layer->d_bias);
+            subtract_matrix_element(layer->bias, layer->d_bias, layer->bias);
+
+            destroy_matrix(learning_rate_mat);
+
 
             destroy_matrix(d_scores);
             destroy_matrix(d_outputs);
@@ -332,7 +348,6 @@ void train(int epochs) {
             sum_loss += loss;
 
             backward(batch_labels);
-            update();
 
             destroy_matrix(batch_features);
             destroy_matrix(batch_labels);
