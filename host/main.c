@@ -99,8 +99,8 @@ void TEEC_SendData(char* directory, int N,
 									features, labels);
 
 	// create parameter buffers
-	double* params0 = malloc(sizeof(double) * features->rows * features->cols);
-	double* params1 = malloc(sizeof(double) * labels->rows * labels->cols);
+	float* params0 = malloc(sizeof(float) * features->rows * features->cols);
+	float* params1 = malloc(sizeof(float) * labels->rows * labels->cols);
 	for (int i=0; i < features->rows; ++i){
 		for (int j=0; j < features->cols; ++j){
 			params0[i*features->cols + j] = features->vals[i][j];
@@ -115,11 +115,11 @@ void TEEC_SendData(char* directory, int N,
 
 	// set the network params	
 	op.params[0].tmpref.buffer = params0;
-	op.params[0].tmpref.size = sizeof(double) * features->rows * features->cols;
+	op.params[0].tmpref.size = sizeof(float) * features->rows * features->cols;
 	op.params[1].value.a = features->rows; // a --> number of rows
 	op.params[1].value.b = features->cols; // b --> number of columns
 	op.params[2].tmpref.buffer = params1;
-	op.params[2].tmpref.size = sizeof(double) * labels->rows * labels->cols;
+	op.params[2].tmpref.size = sizeof(float) * labels->rows * labels->cols;
 	op.params[3].value.a = labels->rows; // a --> number of rows
 	op.params[3].value.b = labels->cols; // b --> number of columns
 

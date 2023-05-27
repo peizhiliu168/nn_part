@@ -5,9 +5,9 @@
 #include "optimizer.h"
 
 
-typedef double (*activation_function)(double);
-typedef double (*activation_function_d)(double);
-typedef double (*loss_function)(matrix_t*, matrix_t*);
+typedef float (*activation_function)(float);
+typedef float (*activation_function_d)(float);
+typedef float (*loss_function)(matrix_t*, matrix_t*);
 typedef matrix_t* (*loss_function_d)(matrix_t*, matrix_t*);
 
 typedef struct layer {
@@ -41,7 +41,7 @@ typedef struct network {
 
     // hyperparameters
     int batch_size;
-    double learning_rate;
+    float learning_rate;
     optimizer_type_t optimizer;
 
     // methods
@@ -60,7 +60,7 @@ layer_t* create_layer(int prev_neurons, int curr_neurons, int store, int layer_n
 
 void destroy_layer(layer_t* layer);
 
-double forward(matrix_t* features, matrix_t* labels);
+float forward(matrix_t* features, matrix_t* labels);
 
 void backward(matrix_t* labels);
 
@@ -68,7 +68,7 @@ void train(int epochs);
 
 matrix_t* predict(matrix_t* features);
 
-double accuracy(matrix_t* y_hat, matrix_t* labels);
+float accuracy(matrix_t* y_hat, matrix_t* labels);
 
 void swap_layers(int start, int end, int train);
 

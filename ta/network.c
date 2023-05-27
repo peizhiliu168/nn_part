@@ -20,7 +20,7 @@ void init_network(void) {
     int layers[] = {784, 64, 32, 10};
     int loaded_start = 0;
     int n_loaded = 1;
-    double learning_rate = 0.03;
+    float learning_rate = 0.03;
     int batch_size = 50;
     optimizer_type_t optimizer = GD;
 
@@ -156,7 +156,7 @@ void destroy_layer(layer_t* layer) {
 
 // input and labels are in row-major order, meaning 
 // each row corresponds to a particular training example. 
-double forward(matrix_t* features, matrix_t* labels) {
+float forward(matrix_t* features, matrix_t* labels) {
     TEE_AddSctrace(23);
     //DMSG("starting forward propagation\n");
     assert(nn != NULL && features != NULL);
@@ -353,11 +353,11 @@ void train(int epochs) {
             destroy_matrix(batch_labels);
 
             TEE_AddSctrace(88);
-            DMSG("batch %d loss: %d\n", b, (int) loss);
+            DMSG("batch %d lofss: %d\n", b, (int) loss);
         }
         sum_loss /= (b + 1);
         matrix_t* y_hat = predict(data_loader->features);
-        double acc = accuracy(y_hat, data_loader->labels);
+        float acc = accuracy(y_hat, data_loader->labels);
         destroy_matrix(y_hat);
         TEE_AddSctrace(66);
         DMSG("========= Epoch: %d, Loss: %d, Accuracy: %d ==========", epoch, (int) (100*sum_loss), (int) (100*acc));
@@ -401,13 +401,13 @@ matrix_t* predict(matrix_t* features) {
 
 
 // given predictions and labels, calculate accuracy
-double accuracy(matrix_t* y_hat, matrix_t* labels) {
+float accuracy(matrix_t* y_hat, matrix_t* labels) {
     assert(y_hat->rows == labels->rows && y_hat->cols == labels->cols);
 
-    double correct = 0;
+    float correct = 0;
     for (int i=0; i < y_hat->rows; ++i) {
         int max_index = 0;
-        double max_value = 0.0;
+        float max_value = 0.0;
         for (int j=0; j < y_hat->cols; ++j) {
             if (y_hat->vals[i][j] > max_value) {
                 max_value = y_hat->vals[i][j];
@@ -417,7 +417,7 @@ double accuracy(matrix_t* y_hat, matrix_t* labels) {
         correct += labels->vals[i][max_index];
     }
 
-    return correct / ((double) (y_hat->rows));
+    return correct / ((float) (y_hat->rows));
 }
 
 // sawp the current layers in nn with the new layers

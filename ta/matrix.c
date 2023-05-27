@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <matrix.h>
 #include <assert.h>
+#include <arm_neon.h>
 
 // simply create matrix initialized with zeros
 matrix_t* create_matrix(int rows, int cols) {
@@ -15,13 +16,13 @@ matrix_t* create_matrix(int rows, int cols) {
     m->rows = rows;
     m->cols = cols;
 
-    m->vals = TEE_Malloc(sizeof(double*) * m->rows, TEE_MALLOC_FILL_ZERO);
+    m->vals = TEE_Malloc(sizeof(float*) * m->rows, TEE_MALLOC_FILL_ZERO);
     if (!m->vals) {
         destroy_matrix(m);
         assert(false);
     }
     for (int i=0; i<m->rows; ++i) {
-        double* row = TEE_Malloc(sizeof(double) * m->cols, TEE_MALLOC_FILL_ZERO);
+        float* row = TEE_Malloc(sizeof(float) * m->cols, TEE_MALLOC_FILL_ZERO);
         if (!row) {
             destroy_matrix(m);
             assert(false);
@@ -47,7 +48,7 @@ matrix_t* create_matrix_identity(int dim) {
 }
 
 // create matrix initialized with values in range randomly
-matrix_t* create_matrix_random(int rows, int cols, double start, double end) {
+matrix_t* create_matrix_random(int rows, int cols, float start, float end) {
     assert(end > start);
 
     matrix_t* m = create_matrix(rows, cols);
@@ -57,7 +58,7 @@ matrix_t* create_matrix_random(int rows, int cols, double start, double end) {
 
     for (int i=0; i<m->rows; ++i) {
         for (int j=0; j<m->cols; ++j) {
-            double val = ((double)rand())/((double)RAND_MAX) * (end - start) + start;
+            float val = ((float)rand())/((float)RAND_MAX) * (end - start) + start;
             m->vals[i][j] = val;
         }
     }
@@ -258,7 +259,7 @@ matrix_t* transpose_matrix(matrix_t* m) {
 // given a function that takes in a single value and 
 // returns a single value, apply that function to every
 // element of the matrix
-void apply_matrix(double (*apply)(double), matrix_t* m){
+void apply_matrix(float (*apply)(float), matrix_t* m){
     if (!m) {
         assert(false);
     }

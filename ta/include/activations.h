@@ -3,12 +3,12 @@
 
 #define MAX(X, Y) (((X) > (Y)) ? (X) : (Y))
 
-double sigmoid(double x);
+float sigmoid(float x);
 
-double d_sigmoid(double x);
+float d_sigmoid(float x);
 
-double relu(double x);
+float relu(float x);
 
-double d_relu(double x);
+float d_relu(float x);
 
 #endif

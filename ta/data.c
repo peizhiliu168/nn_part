@@ -41,7 +41,7 @@ void destroy_data(void) {
 }
 
 // wraps data from vector into a matrix
-matrix_t* wrap_data(double* data, int size, int rows, int cols) {
+matrix_t* wrap_data(float* data, int size, int rows, int cols) {
     DMSG("size: %d, rows: %d, cols: %d\n", size, rows, cols);
     assert(size == (rows * cols));
 

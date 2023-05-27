@@ -23,7 +23,7 @@ void init_data(matrix_t* features, matrix_t* labels, int batch_size);
 
 void destroy_data(void);
 
-matrix_t* wrap_data(double* data, int size, int rows, int cols);
+matrix_t* wrap_data(float* data, int size, int rows, int cols);
 
 extern data_t* data_loader;
 

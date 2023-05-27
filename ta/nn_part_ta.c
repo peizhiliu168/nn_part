@@ -143,7 +143,7 @@ static TEE_Result inc_value(uint32_t param_types,
     // }
 	DMSG("calculating number: %d\n", (int) ta_ln(1e-2));
 	train(10);
-	// double loss = forward(features, labels);
+	// float loss = forward(features, labels);
 	// DMSG("cost: %d\n", (int) loss);
 	// backward(labels);
 
@@ -184,14 +184,14 @@ static TEE_Result send_data(uint32_t param_types, TEE_Param params[4]){
 
 	if (param_types != exp_param_types) return TEE_ERROR_BAD_PARAMETERS;
 
-	double *features = params[0].memref.buffer; // a single row is all the pixels 
-	int features_size = params[0].memref.size / sizeof(double);
+	float *features = params[0].memref.buffer; // a single row is all the pixels 
+	int features_size = params[0].memref.size / sizeof(float);
 
 	int feature_rows = params[1].value.a;
 	int feature_cols = params[1].value.b;
 
-	double *labels = params[2].memref.buffer; // one hot encoding
-	int labels_size = params[2].memref.size  / sizeof(double);
+	float *labels = params[2].memref.buffer; // one hot encoding
+	int labels_size = params[2].memref.size  / sizeof(float);
 
 	int label_rows = params[3].value.a;
 	int label_cols = params[3].value.b;

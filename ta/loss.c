@@ -7,10 +7,10 @@
 #include <stdio.h>
 
 // label is a 1xn matrix 
-double multiclass_softmax(matrix_t* pred, matrix_t* label) {
-    double loss = 0;
+float multiclass_softmax(matrix_t* pred, matrix_t* label) {
+    float loss = 0;
     for (int i=0; i<pred->rows; ++i) {
-        double inner = 0;
+        float inner = 0;
         for (int j=0; j<pred->cols; ++j) {
             inner += ta_exp(pred->vals[i][j]);
         }
@@ -22,10 +22,10 @@ double multiclass_softmax(matrix_t* pred, matrix_t* label) {
 
 // takes in a vector to and compute softmax on
 // that vector
-void softmax_single(double* arr, int size) {
-    assert(0 <= size <= sizeof(arr) / sizeof(double));
+void softmax_single(float* arr, int size) {
+    assert(0 <= size <= sizeof(arr) / sizeof(float));
 
-	double m, sum, val;
+	float m, sum, val;
 
 	m = -inf;
 	for (int i = 0; i < size; ++i) {
@@ -38,7 +38,7 @@ void softmax_single(double* arr, int size) {
 
 	sum = 0.0;
 	for (int i = 0; i < size; ++i) {
-		val = ta_exp(arr[i] - m);
+		val = (float) ta_exp(arr[i] - m);
         arr[i] = val;
         sum += val;
 
@@ -66,7 +66,7 @@ void softmax(matrix_t* m) {
 // both matries are row-major where 
 // each row is prediction/truth for a 
 // single input
-double mean_cross_entropy_softmax(matrix_t* logits, matrix_t* labels) {
+float mean_cross_entropy_softmax(matrix_t* logits, matrix_t* labels) {
     //DMSG("finding mean cross entropy softmax\n");
     assert(logits->rows == labels->rows && logits->cols == labels->cols);
     
@@ -78,7 +78,7 @@ double mean_cross_entropy_softmax(matrix_t* logits, matrix_t* labels) {
     //DMSG("found softmax\n");
     apply_matrix(libm_log, pred);
     //DMSG("applied ln\n");
-    double sum = 0;
+    float sum = 0;
     for (int i=0; i < pred->rows; ++i) {
         for (int j=0; j < pred->cols; ++j) {
             sum += labels->vals[i][j] * pred->vals[i][j];

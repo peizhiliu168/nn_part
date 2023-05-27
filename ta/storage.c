@@ -108,7 +108,7 @@ void* layer_to_buffer(layer_t* layer, size_t* out_size) {
     size_t int_data_size = 4 * sizeof(int);
     size_t matrix_type_size = 6 * sizeof(serialize_t);
     size_t matrix_meta_size = 12 * sizeof(int);
-    size_t matrix_data_size = sizeof(double) * (
+    size_t matrix_data_size = sizeof(float) * (
                                                 layer->weights->rows * layer->weights->cols + 
                                                 layer->d_weights->rows * layer->d_weights->cols +
                                                 layer->bias->rows * layer->bias->cols + 
@@ -285,7 +285,7 @@ void serialize_matrix(matrix_t* m, void* buffer, size_t size, size_t* used) {
 
     size_t type_size = sizeof(serialize_t);
     size_t row_size = sizeof(int), col_size = sizeof(int);
-    size_t data_size = m->rows * m->cols * sizeof(double);
+    size_t data_size = m->rows * m->cols * sizeof(float);
     size_t total_size = type_size + row_size + col_size + data_size;
 
     assert(size >= total_size);
@@ -300,8 +300,8 @@ void serialize_matrix(matrix_t* m, void* buffer, size_t size, size_t* used) {
     
     for (int i=0; i < m->rows; ++i) {
         for (int j=0; j < m->cols; ++j) {
-            *((double*) byte_buffer) = m->vals[i][j];
-            byte_buffer += sizeof(double);
+            *((float*) byte_buffer) = m->vals[i][j];
+            byte_buffer += sizeof(float);
         }
     }
 
@@ -325,7 +325,7 @@ matrix_t* deserialize_matrix(void* buffer, size_t size, size_t* used) {
     int cols = *((int*) byte_buffer);
     byte_buffer += col_size;
 
-    size_t data_size = rows * cols * sizeof(double);
+    size_t data_size = rows * cols * sizeof(float);
     size_t total_size = inter_size + data_size;
 
     assert(size >= total_size);
@@ -333,8 +333,8 @@ matrix_t* deserialize_matrix(void* buffer, size_t size, size_t* used) {
     matrix_t* m = create_matrix(rows, cols);
     for (int i=0; i < rows; ++i) {
         for (int j=0; j < cols; ++j) {
-            m->vals[i][j] = *((double*) byte_buffer);
-            byte_buffer += sizeof(double);
+            m->vals[i][j] = *((float*) byte_buffer);
+            byte_buffer += sizeof(float);
         }
     }
 
@@ -344,12 +344,12 @@ matrix_t* deserialize_matrix(void* buffer, size_t size, size_t* used) {
 }
 
 /*
- int w_size = sizeof(double) * layer->weights->rows * layer->weights->cols;
-    int dw_size = sizeof(double) * layer->d_weights->rows * layer->d_weights->cols;
-    int b_size = sizeof(double) * layer->bias->rows * layer->bias->cols; 
-    int db_size = sizeof(double) * layer->d_bias->rows * layer->d_bias->cols; 
-    int input_size = sizeof(double) * layer->inputs->rows * layer->inputs->cols; 
-    int output_size = sizeof(double) * layer->outputs->rows * layer->outputs->cols; 
+ int w_size = sizeof(float) * layer->weights->rows * layer->weights->cols;
+    int dw_size = sizeof(float) * layer->d_weights->rows * layer->d_weights->cols;
+    int b_size = sizeof(float) * layer->bias->rows * layer->bias->cols; 
+    int db_size = sizeof(float) * layer->d_bias->rows * layer->d_bias->cols; 
+    int input_size = sizeof(float) * layer->inputs->rows * layer->inputs->cols; 
+    int output_size = sizeof(float) * layer->outputs->rows * layer->outputs->cols; 
     
     int total_size = 11*sizeof(int); // Number of metadata
 
@@ -384,7 +384,7 @@ matrix_t* deserialize_matrix(void* buffer, size_t size, size_t* used) {
 
         if (matrix_vals[i] != NULL) { // we are a matrix
             matrix_t* m = matrix_vals[i];
-            double* tmp = buffer[curr_index];
+            float* tmp = buffer[curr_index];
             
             for (int r=0; r < m->rows; ++r) {
                 for (int c=0; c < m->cols; ++c) {
