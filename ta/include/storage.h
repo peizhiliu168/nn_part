@@ -15,6 +15,12 @@ void store_layer(layer_t* layer, int layer_number);
 
 layer_t* read_layer(int layer_number);
 
+void store_layer_SHM(layer_t* layer, int layer_number);
+
+layer_t* read_layer_SHM(int layer_number);
+
+size_t calculate_layer_size_SHM(layer_t* layer, size_t batch_size);
+
 void* layer_to_buffer(layer_t* layer, size_t* out_size);
 
 layer_t* buffer_to_layer(void* buffer, size_t size);

@@ -32,6 +32,7 @@ void init_network(void) {
 
     // set network parameters
     nn->n_layers = n_layers;
+    nn->layer_offsets = TEE_Malloc(n_layers * sizeof(size_t), 0);
     nn->n_loaded = n_loaded;
     nn->loaded_start = loaded_start;
     nn->loaded_end = loaded_start + n_loaded;
@@ -48,14 +49,16 @@ void init_network(void) {
         destroy_network();
         assert(false);    
     }
+
+    size_t offset = 0;
     for (int i=0; i<n_layers; ++i) {
         //DMSG("creating layer: %d\n", i);
         if (i < nn->n_loaded) {
             // create layers that exist in the struct
-            nn->layers[i] = create_layer(layers[i], layers[i+1], false, i);
+            nn->layers[i] = create_layer(layers[i], layers[i+1], false, i, &offset);
         } else {
             // create layers that exist in storage
-            create_layer(layers[i], layers[i+1], true, i);
+            create_layer(layers[i], layers[i+1], true, i, &offset);
         }       
     }
 
@@ -90,13 +93,14 @@ void destroy_network(void) {
     }
     //DMSG("destorying layers struct\n");
     TEE_Free(nn->layers);
+    TEE_Free(nn->layer_offsets);
 L1:
     //DMSG("destorying network\n");
     TEE_Free(nn);
     //DMSG("network destoryed!\n");
 }
 
-layer_t* create_layer(int prev_neurons, int curr_neurons, bool store, int layer_number) {
+layer_t* create_layer(int prev_neurons, int curr_neurons, bool store, int layer_number, size_t* offset) {
     layer_t* layer = TEE_Malloc(sizeof(layer_t), TEE_MALLOC_FILL_ZERO);
     assert(layer != NULL);
 
@@ -115,8 +119,11 @@ layer_t* create_layer(int prev_neurons, int curr_neurons, bool store, int layer_
     layer->inputs = create_matrix(1,1); // placeholder
     layer->outputs = create_matrix(1,1); // placeholder
 
+    nn->layer_offsets[layer_number] = *offset;
+    *offset += calculate_layer_size_SHM(layer, nn->batch_size);
+
     if (store) {
-        store_layer(layer, layer_number);
+        store_layer_SHM(layer, layer_number);
         return NULL;
     }
     return layer;
@@ -437,7 +444,7 @@ void swap_layers(int start, int end, bool train) {
         int store_index = nn->loaded_start + i;
         if (store_index < nn->loaded_end) {
             if (train) { // only store layers when we are in training mode
-                store_layer(nn->layers[i], store_index);
+                store_layer_SHM(nn->layers[i], store_index);
             } else { // if we're in predicting mode, just destroy layer without storing
                 destroy_layer(nn->layers[i]);
             }
@@ -445,7 +452,7 @@ void swap_layers(int start, int end, bool train) {
         
         int load_index = start + i;
         if (load_index < end) {
-            nn->layers[i] = read_layer(load_index);
+            nn->layers[i] = read_layer_SHM(load_index);
         }
     }
     

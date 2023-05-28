@@ -88,6 +88,26 @@ TEE_Result TA_OpenSessionEntryPoint(uint32_t param_types,
 	TEE_InitSctrace();
 	init_network();
 
+
+	// Allocate crypto
+	nn->key_size = 256;
+	TEE_AllocateTransientObject(TEE_TYPE_AES, nn->key_size, &nn->aeskey);
+	TEE_GenerateKey(nn->aeskey, nn->key_size, (TEE_Attribute *)NULL, 0);
+
+	
+
+	// TEE_Result res;
+	// TEE_OperationHandle op_enc, op_dec;
+
+	// res = TEE_AllocateOperation(&op_enc, TEE_ALG_AES_CTR, TEE_MODE_ENCRYPT, key_size);
+	// res = TEE_AllocateOperation(&op_dec, TEE_ALG_AES_CTR, TEE_MODE_DECRYPT, key_size);
+	// res = TEE_SetOperationKey(op_enc, aeskey);
+	// res = TEE_SetOperationKey(op_dec, aeskey);
+
+	// nn->enc_handle = op_enc;
+	// nn->dec_handle = op_dec;
+
+
 	/* If return value != TEE_SUCCESS the session will not be created. */
 	return TEE_SUCCESS;
 }
@@ -147,6 +167,13 @@ static TEE_Result inc_value(uint32_t param_types,
 	// DMSG("cost: %d\n", (int) loss);
 	// backward(labels);
 
+	// Destroy crypto
+	// TEE_FreeOperation(nn->enc_handle);
+	// TEE_FreeOperation(nn->dec_handle);
+
+	TEE_FreeTransientObject(nn->aeskey);
+
+	// Destroy network
 	destroy_network();
 	TEE_GetSctrace(4);
 
@@ -172,6 +199,28 @@ static TEE_Result dec_value(uint32_t param_types,
 
 	return TEE_SUCCESS;
 }
+
+static TEE_Result share_mem(uint32_t param_types,
+	TEE_Param params[4])
+{
+	assert(nn != NULL);
+
+	uint32_t exp_param_types = TEE_PARAM_TYPES(TEE_PARAM_TYPE_VALUE_INOUT,
+						   TEE_PARAM_TYPE_NONE,
+						   TEE_PARAM_TYPE_NONE,
+						   TEE_PARAM_TYPE_NONE);
+
+	DMSG("share_mem has been called");
+
+	if (param_types != exp_param_types)
+		return TEE_ERROR_BAD_PARAMETERS;
+
+	nn->shmem = params[0].memref.buffer;
+	nn->shmem_size = params[0].memref.size;
+
+	return TEE_SUCCESS;
+}
+
 
 static TEE_Result send_data(uint32_t param_types, TEE_Param params[4]){
 	assert(nn != NULL);
@@ -234,6 +283,8 @@ TEE_Result TA_InvokeCommandEntryPoint(void __maybe_unused *sess_ctx,
 		return inc_value(param_types, params);
 	case TA_NN_PART_CMD_DEC_VALUE:
 		return dec_value(param_types, params);
+	case TA_NN_PART_CMD_SHARE_MEM:
+		return share_mem(param_types, params);
 	case TA_NN_PART_CMD_SEND_DATA:
 		return send_data(param_types, params);
 	default:

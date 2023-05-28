@@ -1,6 +1,9 @@
 #ifndef TA_NETWORK_H
 #define TA_NETWORK_H
 
+#include <tee_internal_api.h>
+#include <tee_internal_api_extensions.h>
+
 #include "matrix.h"
 #include "optimizer.h"
 
@@ -33,6 +36,7 @@ typedef struct layer {
 typedef struct network {
     int n_layers;
     layer_t** layers;
+    size_t* layer_offsets;
 
     // partial loading layer within network
     int n_loaded; // maximum number of layers loaded in network
@@ -50,13 +54,21 @@ typedef struct network {
     loss_function Loss;
     loss_function_d Loss_d;
 
+    // transiet TEE key
+    uint32_t key_size;
+    TEE_ObjectHandle aeskey;
+
+    // shared memory buffer pointer
+    void* shmem;
+    uint32_t shmem_size;
+
 } network_t;
 
 void init_network(void);
 
 void destroy_network(void);
 
-layer_t* create_layer(int prev_neurons, int curr_neurons, bool store, int layer_number);
+layer_t* create_layer(int prev_neurons, int curr_neurons, bool store, int layer_number, size_t* offset);
 
 void destroy_layer(layer_t* layer);
 

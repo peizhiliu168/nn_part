@@ -187,6 +187,32 @@ int main(void)
 	if (res != TEEC_SUCCESS)
 		errx(1, "TEEC_InitializeContext failed with code 0x%x", res);
 
+	// Allocate shared memory
+    TEEC_SharedMemory shared_mem;
+    shared_mem.size = 25554432; // 64 MB
+    shared_mem.flags = TEEC_MEM_INPUT | TEEC_MEM_OUTPUT;
+	
+    res = TEEC_AllocateSharedMemory(&ctx, &shared_mem);
+    if (res != TEEC_SUCCESS) {
+        printf("Failed to allocate shared memory: 0x%x\n", res);
+        TEEC_CloseSession(&sess);
+        TEEC_FinalizeContext(&ctx);
+        return res;
+    }
+
+	memset(shared_mem.buffer, 0, shared_mem.size);
+
+	// Set the shared memory reference in the trusted application
+    op.params[0].memref.parent = &shared_mem;
+	op.params[0].memref.offset = 0;
+	op.params[0].memref.size = shared_mem.size;
+
+	res = TEEC_InvokeCommand(&sess, TA_NN_PART_CMD_SHARE_MEM, &op,
+				 &err_origin);
+	if (res != TEEC_SUCCESS)
+		errx(1, "TEEC_InvokeCommand failed with code 0x%x origin 0x%x",
+			res, err_origin);
+
 	/*
 	 * Open a session to the "hello world" TA, the TA will print "hello
 	 * world!" in the log when the session is created.

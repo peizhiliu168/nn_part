@@ -39,6 +39,7 @@
 /* The function IDs implemented in this TA */
 #define TA_NN_PART_CMD_INC_VALUE		0
 #define TA_NN_PART_CMD_DEC_VALUE		1
+#define TA_NN_PART_CMD_SHARE_MEM		2
 #define TA_NN_PART_CMD_SEND_DATA		3
 
 #endif /*TA_NN_PART_H*/

@@ -102,6 +102,126 @@ layer_t* read_layer(int layer_number) {
     return layer;
 }
 
+// sends a secure layer to the REE
+void store_layer_SHM(layer_t* layer, int layer_number) {
+    TEE_AddSctrace(69);
+
+    // Layer serialization into buffer
+    size_t buffer_size;
+    TEE_AddSctrace(690);
+    void* buffer = layer_to_buffer(layer, &buffer_size);
+    TEE_AddSctrace(690);
+
+    
+
+    // // Define operations object
+    // TEE_Result res;
+	// TEE_OperationHandle op_enc;
+	// res = TEE_AllocateOperation(&op_enc, TEE_ALG_AES_CTR, TEE_MODE_ENCRYPT, nn->key_size);
+	// res = TEE_SetOperationKey(op_enc, nn->aeskey);
+
+    // // Encrypt the buffer
+    // size_t IVlen = 16;
+    // void* IV = TEE_Malloc(IVlen, 0);
+    // TEE_CipherInit(op_enc, IV, IVlen);
+
+    // uint32_t encrypted_size;
+    // res = TEE_CipherDoFinal(op_enc, buffer, buffer_size, buffer, &encrypted_size);
+    // TEE_Free(IV);
+
+    // // Free operations object
+    // TEE_FreeOperation(op_enc);
+
+
+    // Send buffer to shared memory
+    size_t offset = nn->layer_offsets[layer_number];
+    *(size_t*)((uint8_t*) nn->shmem + offset) = buffer_size;
+    TEE_MemMove((void*)((uint8_t*) nn->shmem + offset + sizeof(size_t)), buffer, buffer_size);
+
+    // free buffer and layer
+    TEE_Free(buffer);
+    destroy_layer(layer);
+
+    TEE_AddSctrace(69);
+}
+
+// reads the secure object and deserializes layer
+// back into layer_t struct
+layer_t* read_layer_SHM(int layer_number) {
+    TEE_AddSctrace(420);
+    // // open object store
+    // uint32_t storageID = TEE_STORAGE_PRIVATE;
+    // int objectID = layer_number;
+    // size_t objectIDLen = sizeof(layer_number);
+    // uint32_t flags = TEE_DATA_FLAG_ACCESS_READ | TEE_DATA_FLAG_SHARE_READ;
+    // TEE_ObjectHandle handle;
+
+    // TEE_Result res = TEE_OpenPersistentObject(storageID, &objectID,
+    //                                             objectIDLen, flags, &handle);
+    // // DMSG("res: %d\n", res);
+    // assert(res == TEE_SUCCESS);
+
+    // // get object info (mainly to get size of object)
+    // TEE_ObjectInfo info;
+    // res = TEE_GetObjectInfo1(handle, &info);
+    // assert(res == TEE_SUCCESS);
+    // size_t buffer_size = info.dataSize;
+
+    size_t offset = nn->layer_offsets[layer_number];
+    size_t buffer_size = (uint8_t*) nn->shmem + offset;
+
+    // get layer buffer
+    size_t read_size;
+    void* buffer = TEE_Malloc(buffer_size, TEE_MALLOC_FILL_ZERO);
+    TEE_MemMove(buffer, (void*)((uint8_t*) nn->shmem + offset + sizeof(size_t)), buffer_size);
+
+    // Define operations object
+    // TEE_Result res;
+	// TEE_OperationHandle op_dec;
+
+	// res = TEE_AllocateOperation(&op_dec, TEE_ALG_AES_CTR, TEE_MODE_DECRYPT, nn->key_size);
+	// res = TEE_SetOperationKey(op_dec, nn->aeskey);
+
+    // // Decrypt the buffer
+    // size_t IVlen = 16;
+    // void* IV = TEE_Malloc(IVlen, 0);
+    // TEE_CipherInit(op_dec, IV, IVlen);
+
+    // uint32_t encrypted_size;
+    // res = TEE_CipherDoFinal(op_dec, buffer, buffer_size, buffer, &encrypted_size);
+    // TEE_Free(IV);
+
+    // Free operations object
+    // TEE_FreeOperation(op_dec);
+
+    // convert layer buffer to layer
+    TEE_AddSctrace(4201);
+    layer_t* layer = buffer_to_layer(buffer, buffer_size);
+    TEE_AddSctrace(4201);
+    // DMSG("completed buffer to layer conversion for %d\n", layer_number);
+    
+    // free buffer
+    TEE_Free(buffer);
+    TEE_AddSctrace(420);
+    return layer;
+}
+
+size_t calculate_layer_size_SHM(layer_t* layer, size_t batch_size) {
+    size_t size_enc = sizeof(size_t);
+    size_t int_type_size = 10 * sizeof(serialize_t);
+    size_t int_data_size = 4 * sizeof(int);
+    size_t matrix_type_size = 6 * sizeof(serialize_t);
+    size_t matrix_meta_size = 12 * sizeof(int);
+    size_t matrix_data_size = sizeof(float) * (
+                                                2 * layer->weights->rows * layer->weights->cols + 
+                                                2 * layer->bias->rows * layer->bias->cols + 
+                                                batch_size * layer->weights->cols + 
+                                                batch_size * layer->weights->rows
+                                                );
+    size_t total_size = size_enc + int_type_size + int_data_size + matrix_type_size + matrix_meta_size + matrix_data_size;
+    return total_size;
+}
+
 // serialize layer into bytes in a buffered returned to the user
 void* layer_to_buffer(layer_t* layer, size_t* out_size) {
     size_t int_type_size = 10 * sizeof(serialize_t);
