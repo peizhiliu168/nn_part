@@ -135,6 +135,8 @@ void TEEC_SendData(char* directory, int N,
 	// }
 	// printf("----------------------------------------------------\n");
 
+	printf("Started sending training data...\n");
+
 	// send RPC call
 	res = TEEC_InvokeCommand(&sess, TA_NN_PART_CMD_SEND_DATA, &op, &origin);
 
@@ -142,6 +144,8 @@ void TEEC_SendData(char* directory, int N,
 		errx(1, "TEEC_InvokeCommand(TA_NN_PART_CMD_SEND_DATA) failed 0x%x origin 0x%x",
          	res, origin);
 	}
+
+	printf("Finished sending training data to TA.\n");
 
 
 	// for (int i=0; i < features->rows; ++i){
@@ -187,6 +191,8 @@ int main(void)
 	if (res != TEEC_SUCCESS)
 		errx(1, "TEEC_InitializeContext failed with code 0x%x", res);
 
+	printf("Allocating shared memory...\n");
+
 	// Allocate shared memory
     TEEC_SharedMemory shared_mem;
     shared_mem.size = 25554432; // 64 MB
@@ -201,17 +207,8 @@ int main(void)
     }
 
 	memset(shared_mem.buffer, 0, shared_mem.size);
-
-	// Set the shared memory reference in the trusted application
-    op.params[0].memref.parent = &shared_mem;
-	op.params[0].memref.offset = 0;
-	op.params[0].memref.size = shared_mem.size;
-
-	res = TEEC_InvokeCommand(&sess, TA_NN_PART_CMD_SHARE_MEM, &op,
-				 &err_origin);
-	if (res != TEEC_SUCCESS)
-		errx(1, "TEEC_InvokeCommand failed with code 0x%x origin 0x%x",
-			res, err_origin);
+	
+	printf("Finished allocation.\n");
 
 	/*
 	 * Open a session to the "hello world" TA, the TA will print "hello
@@ -223,24 +220,19 @@ int main(void)
 		errx(1, "TEEC_Opensession failed with code 0x%x origin 0x%x",
 			res, err_origin);
 
-	/*
-	 * Execute a function in the TA by invoking it, in this case
-	 * we're incrementing a number.
-	 *
-	 * The value of command ID part and how the parameters are
-	 * interpreted is part of the interface provided by the TA.
-	 */
-
-	/* Clear the TEEC_Operation struct */
+	// Set the shared memory reference in the trusted application
 	memset(&op, 0, sizeof(op));
+    op.params[0].memref.parent = &shared_mem;
+	op.params[0].memref.offset = 0;
+	op.params[0].memref.size = shared_mem.size;
 
-	/*
-	 * Prepare the argument. Pass a value in the first parameter,
-	 * the remaining three parameters are unused.
-	 */
-	op.paramTypes = TEEC_PARAM_TYPES(TEEC_VALUE_INOUT, TEEC_NONE,
-					 TEEC_NONE, TEEC_NONE);
-	op.params[0].value.a = 42;
+	res = TEEC_InvokeCommand(&sess, TA_NN_PART_CMD_SHARE_MEM, &op,
+				 &err_origin);
+	if (res != TEEC_SUCCESS)
+		errx(1, "TEEC_InvokeCommand failed with code 0x%x origin 0x%x",
+			res, err_origin);
+
+	printf("Registered shared memory with TA.\n");
 
 	/*
 	 * TA_HELLO_WORLD_CMD_INC_VALUE is the actual function in the TA to be
@@ -249,7 +241,16 @@ int main(void)
 	char dir[] = "/root/mnist/images";
 	TEEC_SendData(dir, 3000, 28, 28, 1, "_c", 10);
 
-	printf("Invoking TA to increment %d\n", op.params[0].value.a);
+	/*
+	 * Prepare the argument. Pass a value in the first parameter,
+	 * the remaining three parameters are unused.
+	 */
+	memset(&op, 0, sizeof(op));
+	op.paramTypes = TEEC_PARAM_TYPES(TEEC_VALUE_INOUT, TEEC_NONE,
+					 TEEC_NONE, TEEC_NONE);
+	op.params[0].value.a = 42;
+
+	printf("Invoking TA to train network %d\n", op.params[0].value.a);
 	res = TEEC_InvokeCommand(&sess, TA_NN_PART_CMD_INC_VALUE, &op,
 				 &err_origin);
 	if (res != TEEC_SUCCESS)

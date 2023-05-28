@@ -86,14 +86,12 @@ TEE_Result TA_OpenSessionEntryPoint(uint32_t param_types,
 	 */
 	IMSG("Hello World!\n");
 	TEE_InitSctrace();
-	init_network();
-
 
 	// Allocate crypto
 	nn->key_size = 256;
-	TEE_AllocateTransientObject(TEE_TYPE_AES, nn->key_size, &nn->aeskey);
+	TEE_AllocateTransientObject(TEE_TYPE_AES, nn->key_size, &(nn->aeskey));
 	TEE_GenerateKey(nn->aeskey, nn->key_size, (TEE_Attribute *)NULL, 0);
-
+	IMSG("Finished generating key.\n");
 	
 
 	// TEE_Result res;
@@ -203,6 +201,8 @@ static TEE_Result dec_value(uint32_t param_types,
 static TEE_Result share_mem(uint32_t param_types,
 	TEE_Param params[4])
 {
+	init_network();
+	
 	assert(nn != NULL);
 
 	uint32_t exp_param_types = TEE_PARAM_TYPES(TEE_PARAM_TYPE_VALUE_INOUT,

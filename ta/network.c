@@ -52,7 +52,7 @@ void init_network(void) {
 
     size_t offset = 0;
     for (int i=0; i<n_layers; ++i) {
-        //DMSG("creating layer: %d\n", i);
+        DMSG("creating layer: %d\n", i);
         if (i < nn->n_loaded) {
             // create layers that exist in the struct
             nn->layers[i] = create_layer(layers[i], layers[i+1], false, i, &offset);
@@ -68,7 +68,7 @@ void init_network(void) {
     nn->Loss = mean_cross_entropy_softmax;
     nn->Loss_d = d_mean_cross_entropy_softmax;
 
-    //DMSG("finished initializing network\n");
+    DMSG("finished initializing network\n");
     //return nn;
     TEE_AddSctrace(0);
 }
