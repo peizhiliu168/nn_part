@@ -12,6 +12,16 @@
 
 network_t* nn;
 
+network_t* allocate_network(void) {
+    // initialize original network
+    network_t* net = TEE_Malloc(sizeof(network_t), TEE_MALLOC_FILL_ZERO);
+    if (!net) {
+        assert(false);
+    }
+
+    return net;
+}
+
 void init_network(void) {
     TEE_AddSctrace(0);
     //DMSG("initializing network\n");
@@ -23,12 +33,6 @@ void init_network(void) {
     float learning_rate = 0.03;
     int batch_size = 50;
     optimizer_type_t optimizer = GD;
-
-    // initialize original network
-    nn = TEE_Malloc(sizeof(network_t), TEE_MALLOC_FILL_ZERO);
-    if (!nn) {
-        assert(false);
-    }
 
     // set network parameters
     nn->n_layers = n_layers;

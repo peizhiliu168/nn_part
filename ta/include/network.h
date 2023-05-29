@@ -64,6 +64,8 @@ typedef struct network {
 
 } network_t;
 
+network_t* allocate_network(void);
+
 void init_network(void);
 
 void destroy_network(void);

@@ -131,7 +131,7 @@ void store_layer_SHM(layer_t* layer, int layer_number) {
 
     // // Free operations object
     // TEE_FreeOperation(op_enc);
-
+    DMSG("Storing layer in SHMEM\n");
 
     // Send buffer to shared memory
     size_t offset = nn->layer_offsets[layer_number];

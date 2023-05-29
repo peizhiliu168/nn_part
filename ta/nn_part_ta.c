@@ -86,13 +86,17 @@ TEE_Result TA_OpenSessionEntryPoint(uint32_t param_types,
 	 */
 	IMSG("Hello World!\n");
 	TEE_InitSctrace();
+	
+	// Allocate network
+	nn = allocate_network();
+	DMSG("Finished allocating network.\n");
 
 	// Allocate crypto
 	nn->key_size = 256;
 	TEE_AllocateTransientObject(TEE_TYPE_AES, nn->key_size, &(nn->aeskey));
 	TEE_GenerateKey(nn->aeskey, nn->key_size, (TEE_Attribute *)NULL, 0);
-	IMSG("Finished generating key.\n");
-	
+	DMSG("Finished generating key.\n");
+
 
 	// TEE_Result res;
 	// TEE_OperationHandle op_enc, op_dec;
@@ -201,22 +205,26 @@ static TEE_Result dec_value(uint32_t param_types,
 static TEE_Result share_mem(uint32_t param_types,
 	TEE_Param params[4])
 {
-	init_network();
-	
-	assert(nn != NULL);
-
-	uint32_t exp_param_types = TEE_PARAM_TYPES(TEE_PARAM_TYPE_VALUE_INOUT,
+	uint32_t exp_param_types = TEE_PARAM_TYPES(TEE_PARAM_TYPE_MEMREF_INOUT,
 						   TEE_PARAM_TYPE_NONE,
 						   TEE_PARAM_TYPE_NONE,
 						   TEE_PARAM_TYPE_NONE);
 
-	DMSG("share_mem has been called");
-
-	if (param_types != exp_param_types)
+	DMSG("Share Mem command called.\n");
+	
+	if (param_types != exp_param_types) {
+		DMSG("Bad parameters\n");
 		return TEE_ERROR_BAD_PARAMETERS;
+	}
 
 	nn->shmem = params[0].memref.buffer;
 	nn->shmem_size = params[0].memref.size;
+	DMSG("Set shared memory pointer.\n");
+
+	// Initialize network
+	init_network();
+	DMSG("Initialized network.\n");
+	
 
 	return TEE_SUCCESS;
 }
