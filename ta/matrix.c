@@ -191,9 +191,14 @@ void div_matrix_element(matrix_t* m, matrix_t* n, matrix_t* result) {
 
 // matrix multiplication m x n
 void mult_matrix(matrix_t* m, matrix_t* n, matrix_t* result) {
+    DMSG("In mult_matrix\n");
+    
     if (!m || !n || !result) {
         assert(false);
     }
+
+    DMSG("m_rows: %d, m_cols: %d, n_rows: %d, n_cols: %d, result_rows: %d, result_cols: %d\n", 
+        m->rows, m->cols, n->rows, n->cols, result->rows, result->cols);
 
     if (m->cols != n->rows || m->rows != result->rows || n->cols != result->cols) {
         assert(false);

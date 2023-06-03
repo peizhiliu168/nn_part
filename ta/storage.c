@@ -1,3 +1,4 @@
+#include <string.h>
 #include <tee_internal_api.h>
 #include <tee_internal_api_extensions.h>
 
@@ -104,6 +105,7 @@ layer_t* read_layer(int layer_number) {
 
 // sends a secure layer to the REE
 void store_layer_SHM(layer_t* layer, int layer_number) {
+    DMSG("Store layer, %d\n", layer_number);
     TEE_AddSctrace(69);
 
     // Layer serialization into buffer
@@ -131,12 +133,20 @@ void store_layer_SHM(layer_t* layer, int layer_number) {
 
     // // Free operations object
     // TEE_FreeOperation(op_enc);
-    DMSG("Storing layer in SHMEM\n");
 
     // Send buffer to shared memory
     size_t offset = nn->layer_offsets[layer_number];
-    *(size_t*)((uint8_t*) nn->shmem + offset) = buffer_size;
-    TEE_MemMove((void*)((uint8_t*) nn->shmem + offset + sizeof(size_t)), buffer, buffer_size);
+    DMSG("Store layer\n");
+    DMSG("Storing layer in SHMEM: offset %d, content: %d\n", offset, *((uint32_t*) nn->shmem));
+
+    uint8_t* shmem = ((uint8_t*) nn->shmem);
+    
+    *(size_t*)(shmem + offset) = buffer_size;
+
+    // *((size_t*) shmem[offset]) = buffer_size;
+    DMSG("Stored buffer size\n");
+    TEE_MemMove(shmem + offset + sizeof(size_t), buffer, buffer_size);
+    DMSG("Stored layer\n");
 
     // free buffer and layer
     TEE_Free(buffer);
@@ -148,6 +158,7 @@ void store_layer_SHM(layer_t* layer, int layer_number) {
 // reads the secure object and deserializes layer
 // back into layer_t struct
 layer_t* read_layer_SHM(int layer_number) {
+    DMSG("Read layer: %d\n", layer_number);
     TEE_AddSctrace(420);
     // // open object store
     // uint32_t storageID = TEE_STORAGE_PRIVATE;
@@ -168,12 +179,16 @@ layer_t* read_layer_SHM(int layer_number) {
     // size_t buffer_size = info.dataSize;
 
     size_t offset = nn->layer_offsets[layer_number];
-    size_t buffer_size = (uint8_t*) nn->shmem + offset;
+    DMSG("Reading layer from SHMEM: offset %d\n", offset);
+
+    uint8_t* shmem = ((uint8_t*) nn->shmem);
+
+    size_t buffer_size = *(size_t*)(shmem + offset);
 
     // get layer buffer
     size_t read_size;
     void* buffer = TEE_Malloc(buffer_size, TEE_MALLOC_FILL_ZERO);
-    TEE_MemMove(buffer, (void*)((uint8_t*) nn->shmem + offset + sizeof(size_t)), buffer_size);
+    TEE_MemMove(buffer, (void*)(shmem + offset + sizeof(size_t)), buffer_size);
 
     // Define operations object
     // TEE_Result res;

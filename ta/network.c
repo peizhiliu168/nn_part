@@ -36,7 +36,7 @@ void init_network(void) {
 
     // set network parameters
     nn->n_layers = n_layers;
-    nn->layer_offsets = TEE_Malloc(n_layers * sizeof(size_t), 0);
+    nn->layer_offsets = TEE_Malloc(n_layers * sizeof(size_t), TEE_MALLOC_FILL_ZERO);
     nn->n_loaded = n_loaded;
     nn->loaded_start = loaded_start;
     nn->loaded_end = loaded_start + n_loaded;
@@ -169,7 +169,7 @@ void destroy_layer(layer_t* layer) {
 // each row corresponds to a particular training example. 
 float forward(matrix_t* features, matrix_t* labels) {
     TEE_AddSctrace(23);
-    //DMSG("starting forward propagation\n");
+    DMSG("starting forward propagation\n");
     assert(nn != NULL && features != NULL);
 
     bool training = labels != NULL;
@@ -181,7 +181,7 @@ float forward(matrix_t* features, matrix_t* labels) {
         int start = l * nn->n_loaded;
         int end = MIN((l + 1) * nn->n_loaded, nn->n_layers);
         
-        // DMSG("swapping layers %d to %d\n", start, end);
+        DMSG("swapping layers %d to %d\n", start, end);
         swap_layers(start, end, training);
         
         // DMSG("forward layers %d to %d\n", start, end);
@@ -192,7 +192,7 @@ float forward(matrix_t* features, matrix_t* labels) {
             matrix_t* inputs = outputs;
 
             layer_t* layer = nn->layers[i];
-            //DMSG("rows: %d, cols: %d\n", inputs->rows, inputs->cols);
+            DMSG("rows: %d, cols: %d\n", inputs->rows, inputs->cols);
             // DMSG("destroyed previous input and output\n");
             destroy_matrix(layer->inputs);
             destroy_matrix(layer->outputs);
@@ -229,7 +229,7 @@ float forward(matrix_t* features, matrix_t* labels) {
 
 // labels are in row-major order
 void backward(matrix_t* labels) {
-    // DMSG("starting back propagation\n");
+    DMSG("starting back propagation\n");
     TEE_AddSctrace(44);
     assert(nn != NULL && labels != NULL);
 
@@ -242,7 +242,7 @@ void backward(matrix_t* labels) {
         // DMSG("back swapping layers %d to %d\n", start, end);
         swap_layers(start, end, true);
         
-        // DMSG("back layers %d to %d\n", start, end);
+        DMSG("back layers %d to %d\n", start, end);
         TEE_AddSctrace(440);
         for (int i=((end - start) - 1); i >= 0; --i) {
             TEE_AddSctrace(441);

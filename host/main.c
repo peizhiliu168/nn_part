@@ -206,6 +206,7 @@ int main(void)
 
 	// Allocate shared memory
     TEEC_SharedMemory shared_mem;
+	shared_mem.buffer = NULL;
     shared_mem.size = 4000000; // 64 MB
     shared_mem.flags = TEEC_MEM_INPUT | TEEC_MEM_OUTPUT;
 	
@@ -222,7 +223,7 @@ int main(void)
 
 	// Set the shared memory reference in the trusted application
 	memset(&op, 0, sizeof(op));
-	op.paramTypes = TEEC_PARAM_TYPES(TEEC_MEMREF_WHOLE, 
+	op.paramTypes = TEEC_PARAM_TYPES(TEEC_MEMREF_PARTIAL_INOUT, 
 						TEEC_NONE, TEEC_NONE, TEEC_NONE);
 
     op.params[0].memref.parent = &shared_mem;
@@ -251,19 +252,21 @@ int main(void)
 	 * the remaining three parameters are unused.
 	 */
 	memset(&op, 0, sizeof(op));
-	op.paramTypes = TEEC_PARAM_TYPES(TEEC_VALUE_INOUT, TEEC_NONE,
-					 TEEC_NONE, TEEC_NONE);
-	op.params[0].value.a = 42;
+	op.paramTypes = TEEC_PARAM_TYPES(TEEC_MEMREF_PARTIAL_INOUT, 
+						TEEC_NONE, TEEC_NONE, TEEC_NONE);
 
-	printf("Invoking TA to train network %d\n", op.params[0].value.a);
-	res = TEEC_InvokeCommand(&sess, TA_NN_PART_CMD_INC_VALUE, &op,
-				 &err_origin);
+    op.params[0].memref.parent = &shared_mem;
+	op.params[0].memref.offset = 0;
+	op.params[0].memref.size = shared_mem.size;
+
+	printf("Invoking TA to train network\n");
+	
+	res = TEEC_InvokeCommand(&sess, TA_NN_PART_CMD_TRAIN_NET, &op, &err_origin);
+
 	if (res != TEEC_SUCCESS)
 		errx(1, "TEEC_InvokeCommand failed with code 0x%x origin 0x%x",
 			res, err_origin);
-	printf("TA incremented value to %d\n", op.params[0].value.a);
 
-	
 
 	/*
 	 * We're done with the TA, close the session and
@@ -272,6 +275,8 @@ int main(void)
 	 * The TA will print "Goodbye!" in the log when the
 	 * session is closed.
 	 */
+
+	TEEC_ReleaseSharedMemory(&shared_mem);
 
 	TEEC_CloseSession(&sess);
 

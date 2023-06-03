@@ -219,12 +219,40 @@ static TEE_Result share_mem(uint32_t param_types,
 
 	nn->shmem = params[0].memref.buffer;
 	nn->shmem_size = params[0].memref.size;
-	DMSG("Set shared memory pointer.\n");
+	// DMSG("Set shared memory pointer. %d, size: %d, contents: %d\n", nn->shmem, nn->shmem_size, *((uint32_t*) nn->shmem));
 
 	// Initialize network
 	init_network();
 	DMSG("Initialized network.\n");
 	
+
+	return TEE_SUCCESS;
+}
+
+static TEE_Result train_net(uint32_t param_types,
+	TEE_Param params[4])
+{
+	uint32_t exp_param_types = TEE_PARAM_TYPES(TEE_PARAM_TYPE_MEMREF_INOUT,
+						   TEE_PARAM_TYPE_NONE,
+						   TEE_PARAM_TYPE_NONE,
+						   TEE_PARAM_TYPE_NONE);
+	DMSG("train_net has been called");
+
+	if (param_types != exp_param_types) {
+		DMSG("Bad parameters\n");
+		return TEE_ERROR_BAD_PARAMETERS;
+	}
+	
+	nn->shmem = params[0].memref.buffer;
+	nn->shmem_size = params[0].memref.size;
+
+	train(10);
+
+	TEE_FreeTransientObject(nn->aeskey);
+
+	// Destroy network
+	destroy_network();
+	TEE_GetSctrace(4);
 
 	return TEE_SUCCESS;
 }
@@ -295,6 +323,8 @@ TEE_Result TA_InvokeCommandEntryPoint(void __maybe_unused *sess_ctx,
 		return share_mem(param_types, params);
 	case TA_NN_PART_CMD_SEND_DATA:
 		return send_data(param_types, params);
+	case TA_NN_PART_CMD_TRAIN_NET:
+		return train_net(param_types, params);
 	default:
 		return TEE_ERROR_BAD_PARAMETERS;
 	}
