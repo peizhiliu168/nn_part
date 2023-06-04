@@ -112,27 +112,49 @@ void store_layer_SHM(layer_t* layer, int layer_number) {
     size_t buffer_size;
     TEE_AddSctrace(690);
     void* buffer = layer_to_buffer(layer, &buffer_size);
+    void* enc_buffer = TEE_Malloc(buffer_size, TEE_MALLOC_FILL_ZERO);
     TEE_AddSctrace(690);
 
     
 
-    // // Define operations object
-    // TEE_Result res;
-	// TEE_OperationHandle op_enc;
-	// res = TEE_AllocateOperation(&op_enc, TEE_ALG_AES_CTR, TEE_MODE_ENCRYPT, nn->key_size);
-	// res = TEE_SetOperationKey(op_enc, nn->aeskey);
+    // Define operations object
+    TEE_Result res;
+	TEE_OperationHandle op_enc;
+	res = TEE_AllocateOperation(&op_enc, TEE_ALG_AES_CTR, TEE_MODE_ENCRYPT, nn->key_size);
+    if (res != TEE_SUCCESS) {
+        EMSG("Store - allocate operation failed\n");
+    }
 
-    // // Encrypt the buffer
-    // size_t IVlen = 16;
-    // void* IV = TEE_Malloc(IVlen, 0);
-    // TEE_CipherInit(op_enc, IV, IVlen);
+	res = TEE_SetOperationKey(op_enc, nn->aeskey);
+    if (res != TEE_SUCCESS) {
+        EMSG("Store - set operation key failed\n");
+    }
 
-    // uint32_t encrypted_size;
-    // res = TEE_CipherDoFinal(op_enc, buffer, buffer_size, buffer, &encrypted_size);
-    // TEE_Free(IV);
+    // Encrypt the buffer
+    size_t IVlen = 16;
+    void* IV = TEE_Malloc(IVlen, 0);
+    TEE_CipherInit(op_enc, IV, IVlen);
 
-    // // Free operations object
-    // TEE_FreeOperation(op_enc);
+    
+    uint32_t encrypted_size = buffer_size;
+    TEE_CipherUpdate(op_enc, buffer, buffer_size, enc_buffer, &encrypted_size);
+    if (res != TEE_SUCCESS) {
+        EMSG("Store - Cipher update failed 0x%x\n", res);
+    }
+
+    DMSG("=============================== Encrypt layer, buffer size: %d, enc size: %d\n", buffer_size, encrypted_size);
+
+    res = TEE_CipherDoFinal(op_enc, buffer, buffer_size, enc_buffer, &encrypted_size);
+    if (res != TEE_SUCCESS) {
+        EMSG("Store - Cipher do final failed 0x%x\n", res);
+    }
+
+    TEE_Free(IV);
+
+
+    // Free operations object
+
+    TEE_FreeOperation(op_enc);
 
     // Send buffer to shared memory
     size_t offset = nn->layer_offsets[layer_number];
@@ -140,16 +162,17 @@ void store_layer_SHM(layer_t* layer, int layer_number) {
     DMSG("Storing layer in SHMEM: offset %d, content: %d\n", offset, *((uint32_t*) nn->shmem));
 
     uint8_t* shmem = ((uint8_t*) nn->shmem);
-    
+
     *(size_t*)(shmem + offset) = buffer_size;
 
     // *((size_t*) shmem[offset]) = buffer_size;
     DMSG("Stored buffer size\n");
-    TEE_MemMove(shmem + offset + sizeof(size_t), buffer, buffer_size);
+    TEE_MemMove(shmem + offset + sizeof(size_t), enc_buffer, buffer_size);
     DMSG("Stored layer\n");
 
     // free buffer and layer
     TEE_Free(buffer);
+    TEE_Free(enc_buffer);
     destroy_layer(layer);
 
     TEE_AddSctrace(69);
@@ -179,35 +202,56 @@ layer_t* read_layer_SHM(int layer_number) {
     // size_t buffer_size = info.dataSize;
 
     size_t offset = nn->layer_offsets[layer_number];
-    DMSG("Reading layer from SHMEM: offset %d\n", offset);
 
     uint8_t* shmem = ((uint8_t*) nn->shmem);
 
     size_t buffer_size = *(size_t*)(shmem + offset);
+    DMSG("Reading layer from SHMEM: offset %d, size: %d\n", offset, buffer_size);
+
 
     // get layer buffer
     size_t read_size;
     void* buffer = TEE_Malloc(buffer_size, TEE_MALLOC_FILL_ZERO);
-    TEE_MemMove(buffer, (void*)(shmem + offset + sizeof(size_t)), buffer_size);
+    void* enc_buffer = TEE_Malloc(buffer_size, TEE_MALLOC_FILL_ZERO);
+    TEE_MemMove(enc_buffer, (void*)(shmem + offset + sizeof(size_t)), buffer_size);
 
     // Define operations object
-    // TEE_Result res;
-	// TEE_OperationHandle op_dec;
+    TEE_Result res;
+	TEE_OperationHandle op_dec;
 
-	// res = TEE_AllocateOperation(&op_dec, TEE_ALG_AES_CTR, TEE_MODE_DECRYPT, nn->key_size);
-	// res = TEE_SetOperationKey(op_dec, nn->aeskey);
+	res = TEE_AllocateOperation(&op_dec, TEE_ALG_AES_CTR, TEE_MODE_DECRYPT, nn->key_size);
+    if (res != TEE_SUCCESS) {
+        EMSG("Load - Allocation operation failed: 0x%x\n", res);
+    }
 
-    // // Decrypt the buffer
-    // size_t IVlen = 16;
-    // void* IV = TEE_Malloc(IVlen, 0);
-    // TEE_CipherInit(op_dec, IV, IVlen);
+	res = TEE_SetOperationKey(op_dec, nn->aeskey);
+    if (res != TEE_SUCCESS) {
+        EMSG("Load - Set operation key failed 0x%x\n", res);
+    }
 
-    // uint32_t encrypted_size;
-    // res = TEE_CipherDoFinal(op_dec, buffer, buffer_size, buffer, &encrypted_size);
-    // TEE_Free(IV);
+    // Decrypt the buffer
+    size_t IVlen = 16;
+    void* IV = TEE_Malloc(IVlen, 0);
+    TEE_CipherInit(op_dec, IV, IVlen);
+    if (res != TEE_SUCCESS) {
+        EMSG("Load - Cipher init failed 0x%x\n", res);
+    }
+
+    uint32_t decrypt_size = buffer_size;
+    res = TEE_CipherUpdate(op_dec, enc_buffer, buffer_size, buffer, &decrypt_size);
+    if (res != TEE_SUCCESS) {
+        EMSG("Load - Cipher update failed 0x%x need size %d\n", res, decrypt_size);
+    }
+
+    res = TEE_CipherDoFinal(op_dec, enc_buffer, buffer_size, buffer, &decrypt_size);
+    if (res != TEE_SUCCESS) {
+        EMSG("Load - Cipher do final failed 0x%x need size %d\n", res, decrypt_size);
+    }
+
+    TEE_Free(IV);
 
     // Free operations object
-    // TEE_FreeOperation(op_dec);
+    TEE_FreeOperation(op_dec);
 
     // convert layer buffer to layer
     TEE_AddSctrace(4201);
@@ -217,6 +261,7 @@ layer_t* read_layer_SHM(int layer_number) {
     
     // free buffer
     TEE_Free(buffer);
+    TEE_Free(enc_buffer);
     TEE_AddSctrace(420);
     return layer;
 }
