@@ -71,7 +71,7 @@ TEE_Result TA_OpenSessionEntryPoint(uint32_t param_types,
 						   TEE_PARAM_TYPE_NONE,
 						   TEE_PARAM_TYPE_NONE);
 
-	DMSG("has been called");
+	// DMSG("has been called");
 
 	if (param_types != exp_param_types)
 		return TEE_ERROR_BAD_PARAMETERS;
@@ -84,18 +84,18 @@ TEE_Result TA_OpenSessionEntryPoint(uint32_t param_types,
 	 * The DMSG() macro is non-standard, TEE Internal API doesn't
 	 * specify any means to logging from a TA.
 	 */
-	IMSG("Hello World!\n");
+	// IMSG("Hello World!\n");
 	TEE_InitSctrace();
 	
 	// Allocate network
 	nn = allocate_network();
-	DMSG("Finished allocating network.\n");
+	// DMSG("Finished allocating network.\n");
 
 	// Allocate crypto
 	nn->key_size = 256;
 	TEE_AllocateTransientObject(TEE_TYPE_AES, nn->key_size, &(nn->aeskey));
 	TEE_GenerateKey(nn->aeskey, nn->key_size, (TEE_Attribute *)NULL, 0);
-	DMSG("Finished generating key.\n");
+	// DMSG("Finished generating key.\n");
 
 
 	// TEE_Result res;
@@ -132,7 +132,7 @@ static TEE_Result inc_value(uint32_t param_types,
 						   TEE_PARAM_TYPE_NONE,
 						   TEE_PARAM_TYPE_NONE);
 
-	DMSG("has been called");
+	// DMSG("has been called");
 
 	if (param_types != exp_param_types)
 		return TEE_ERROR_BAD_PARAMETERS;
@@ -163,7 +163,7 @@ static TEE_Result inc_value(uint32_t param_types,
 	// for (int i=0; i < 10; ++i) {
     //     DMSG("sample: %.6f\n", labels->vals[0][i]);
     // }
-	DMSG("calculating number: %d\n", (int) ta_ln(1e-2));
+	// DMSG("calculating number: %d\n", (int) ta_ln(1e-2));
 	train(10);
 	// float loss = forward(features, labels);
 	// DMSG("cost: %d\n", (int) loss);
@@ -190,7 +190,7 @@ static TEE_Result dec_value(uint32_t param_types,
 						   TEE_PARAM_TYPE_NONE,
 						   TEE_PARAM_TYPE_NONE);
 
-	DMSG("has been called");
+	// DMSG("has been called");
 
 	if (param_types != exp_param_types)
 		return TEE_ERROR_BAD_PARAMETERS;
@@ -210,10 +210,10 @@ static TEE_Result share_mem(uint32_t param_types,
 						   TEE_PARAM_TYPE_NONE,
 						   TEE_PARAM_TYPE_NONE);
 
-	DMSG("Share Mem command called.\n");
+	// DMSG("Share Mem command called.\n");
 	
 	if (param_types != exp_param_types) {
-		DMSG("Bad parameters\n");
+		// DMSG("Bad parameters\n");
 		return TEE_ERROR_BAD_PARAMETERS;
 	}
 
@@ -223,7 +223,7 @@ static TEE_Result share_mem(uint32_t param_types,
 
 	// Initialize network
 	init_network();
-	DMSG("Initialized network.\n");
+	// DMSG("Initialized network.\n");
 	
 
 	return TEE_SUCCESS;
@@ -236,10 +236,10 @@ static TEE_Result train_net(uint32_t param_types,
 						   TEE_PARAM_TYPE_NONE,
 						   TEE_PARAM_TYPE_NONE,
 						   TEE_PARAM_TYPE_NONE);
-	DMSG("train_net has been called");
+	// DMSG("train_net has been called");
 
 	if (param_types != exp_param_types) {
-		DMSG("Bad parameters\n");
+		// DMSG("Bad parameters\n");
 		return TEE_ERROR_BAD_PARAMETERS;
 	}
 	
@@ -260,12 +260,13 @@ static TEE_Result train_net(uint32_t param_types,
 
 static TEE_Result send_data(uint32_t param_types, TEE_Param params[4]){
 	assert(nn != NULL);
+	TEE_AddSctrace(555);
 
 	uint32_t exp_param_types = TEE_PARAM_TYPES(TEE_PARAM_TYPE_MEMREF_INPUT,
 						   TEE_PARAM_TYPE_VALUE_INPUT,
 						   TEE_PARAM_TYPE_MEMREF_INPUT,
 						   TEE_PARAM_TYPE_VALUE_INPUT);
-	DMSG("send_data has been called");
+	// DMSG("send_data has been called");
 
 	if (param_types != exp_param_types) return TEE_ERROR_BAD_PARAMETERS;
 
@@ -297,7 +298,7 @@ static TEE_Result send_data(uint32_t param_types, TEE_Param params[4]){
 	matrix_t* wrapped_labels = wrap_data(labels, labels_size, label_rows, label_cols);
 
 	init_data(wrapped_features, wrapped_labels, nn->batch_size);
-	DMSG("send_data has finished");
+	// DMSG("send_data has finished");
 
 	TEE_AddSctrace(555);
 	return TEE_SUCCESS;

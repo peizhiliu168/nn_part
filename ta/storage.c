@@ -105,7 +105,7 @@ layer_t* read_layer(int layer_number) {
 
 // sends a secure layer to the REE
 void store_layer_SHM(layer_t* layer, int layer_number) {
-    DMSG("Store layer, %d\n", layer_number);
+    // DMSG("Store layer, %d\n", layer_number);
     TEE_AddSctrace(69);
 
     // Layer serialization into buffer
@@ -142,7 +142,7 @@ void store_layer_SHM(layer_t* layer, int layer_number) {
         EMSG("Store - Cipher update failed 0x%x\n", res);
     }
 
-    DMSG("=============================== Encrypt layer, buffer size: %d, enc size: %d\n", buffer_size, encrypted_size);
+    // DMSG("=============================== Encrypt layer, buffer size: %d, enc size: %d\n", buffer_size, encrypted_size);
 
     res = TEE_CipherDoFinal(op_enc, buffer, buffer_size, enc_buffer, &encrypted_size);
     if (res != TEE_SUCCESS) {
@@ -158,17 +158,17 @@ void store_layer_SHM(layer_t* layer, int layer_number) {
 
     // Send buffer to shared memory
     size_t offset = nn->layer_offsets[layer_number];
-    DMSG("Store layer\n");
-    DMSG("Storing layer in SHMEM: offset %d, content: %d\n", offset, *((uint32_t*) nn->shmem));
+    // DMSG("Store layer\n");
+    // DMSG("Storing layer in SHMEM: offset %d, content: %d\n", offset, *((uint32_t*) nn->shmem));
 
     uint8_t* shmem = ((uint8_t*) nn->shmem);
 
     *(size_t*)(shmem + offset) = buffer_size;
 
     // *((size_t*) shmem[offset]) = buffer_size;
-    DMSG("Stored buffer size\n");
+    // DMSG("Stored buffer size\n");
     TEE_MemMove(shmem + offset + sizeof(size_t), enc_buffer, buffer_size);
-    DMSG("Stored layer\n");
+    // DMSG("Stored layer\n");
 
     // free buffer and layer
     TEE_Free(buffer);
@@ -181,7 +181,7 @@ void store_layer_SHM(layer_t* layer, int layer_number) {
 // reads the secure object and deserializes layer
 // back into layer_t struct
 layer_t* read_layer_SHM(int layer_number) {
-    DMSG("Read layer: %d\n", layer_number);
+    // DMSG("Read layer: %d\n", layer_number);
     TEE_AddSctrace(420);
     // // open object store
     // uint32_t storageID = TEE_STORAGE_PRIVATE;
@@ -206,7 +206,7 @@ layer_t* read_layer_SHM(int layer_number) {
     uint8_t* shmem = ((uint8_t*) nn->shmem);
 
     size_t buffer_size = *(size_t*)(shmem + offset);
-    DMSG("Reading layer from SHMEM: offset %d, size: %d\n", offset, buffer_size);
+    // DMSG("Reading layer from SHMEM: offset %d, size: %d\n", offset, buffer_size);
 
 
     // get layer buffer

@@ -31,7 +31,7 @@ void init_network(void) {
     int loaded_start = 0;
     int n_loaded = 1;
     float learning_rate = 0.03;
-    int batch_size = 50;
+    int batch_size = 100;
     optimizer_type_t optimizer = GD;
 
     // set network parameters
@@ -56,7 +56,7 @@ void init_network(void) {
 
     size_t offset = 0;
     for (int i=0; i<n_layers; ++i) {
-        DMSG("creating layer: %d\n", i);
+        // DMSG("creating layer: %d\n", i);
         if (i < nn->n_loaded) {
             // create layers that exist in the struct
             nn->layers[i] = create_layer(layers[i], layers[i+1], false, i, &offset);
@@ -72,7 +72,7 @@ void init_network(void) {
     nn->Loss = mean_cross_entropy_softmax;
     nn->Loss_d = d_mean_cross_entropy_softmax;
 
-    DMSG("finished initializing network\n");
+    // DMSG("finished initializing network\n");
     //return nn;
     TEE_AddSctrace(0);
 }
@@ -169,7 +169,7 @@ void destroy_layer(layer_t* layer) {
 // each row corresponds to a particular training example. 
 float forward(matrix_t* features, matrix_t* labels) {
     TEE_AddSctrace(23);
-    DMSG("starting forward propagation\n");
+    // DMSG("starting forward propagation\n");
     assert(nn != NULL && features != NULL);
 
     bool training = labels != NULL;
@@ -181,7 +181,7 @@ float forward(matrix_t* features, matrix_t* labels) {
         int start = l * nn->n_loaded;
         int end = MIN((l + 1) * nn->n_loaded, nn->n_layers);
         
-        DMSG("swapping layers %d to %d\n", start, end);
+        // DMSG("swapping layers %d to %d\n", start, end);
         swap_layers(start, end, training);
         
         // DMSG("forward layers %d to %d\n", start, end);
@@ -192,7 +192,7 @@ float forward(matrix_t* features, matrix_t* labels) {
             matrix_t* inputs = outputs;
 
             layer_t* layer = nn->layers[i];
-            DMSG("rows: %d, cols: %d\n", inputs->rows, inputs->cols);
+            // DMSG("rows: %d, cols: %d\n", inputs->rows, inputs->cols);
             // DMSG("destroyed previous input and output\n");
             destroy_matrix(layer->inputs);
             destroy_matrix(layer->outputs);
@@ -229,7 +229,7 @@ float forward(matrix_t* features, matrix_t* labels) {
 
 // labels are in row-major order
 void backward(matrix_t* labels) {
-    DMSG("starting back propagation\n");
+    // DMSG("starting back propagation\n");
     TEE_AddSctrace(44);
     assert(nn != NULL && labels != NULL);
 
@@ -242,7 +242,7 @@ void backward(matrix_t* labels) {
         // DMSG("back swapping layers %d to %d\n", start, end);
         swap_layers(start, end, true);
         
-        DMSG("back layers %d to %d\n", start, end);
+        // DMSG("back layers %d to %d\n", start, end);
         TEE_AddSctrace(440);
         for (int i=((end - start) - 1); i >= 0; --i) {
             TEE_AddSctrace(441);
@@ -364,7 +364,7 @@ void train(int epochs) {
             destroy_matrix(batch_labels);
 
             TEE_AddSctrace(88);
-            DMSG("batch %d lofss: %d\n", b, (int) loss);
+            DMSG("batch %d loss: %d\n", b, (int) loss);
         }
         sum_loss /= (b + 1);
         matrix_t* y_hat = predict(data_loader->features);

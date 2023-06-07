@@ -229,11 +229,11 @@ int main(void)
     op.params[0].memref.parent = &shared_mem;
 	op.params[0].memref.offset = 0;
 	op.params[0].memref.size = shared_mem.size;
-	printf("5\n");
+	// printf("5\n");
 
 	res = TEEC_InvokeCommand(&sess, TA_NN_PART_CMD_SHARE_MEM, &op,
 				 &err_origin);
-	printf("6\n");
+	// printf("6\n");
 	if (res != TEEC_SUCCESS)
 		errx(1, "TEEC_InvokeCommand failed with code 0x%x origin 0x%x",
 			res, err_origin);
