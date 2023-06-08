@@ -158,7 +158,7 @@ void destroy_layer(layer_t* layer) {
 // each row corresponds to a particular training example. 
 float forward(matrix_t* features, matrix_t* labels) {
     TEE_AddSctrace(23);
-    //DMSG("starting forward propagation\n");
+    // DMSG("starting forward propagation\n");
     assert(nn != NULL && features != NULL);
 
     bool training = labels != NULL;
@@ -199,7 +199,7 @@ float forward(matrix_t* features, matrix_t* labels) {
             // easier to manage
             layer->outputs = outputs;
 
-            //DMSG("propagated through layer %d\n", i);
+            // DMSG("propagated through layer %d\n", i);
             outputs = copy_matrix(outputs);
             TEE_AddSctrace(231);
         }
@@ -311,7 +311,7 @@ void backward(matrix_t* labels) {
     destroy_matrix(d_outputs);
     TEE_AddSctrace(440);
 
-    //DMSG("finished backprop!\n");
+    // DMSG("finished backprop!\n");
     TEE_AddSctrace(44);
     return;
 }

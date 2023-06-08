@@ -142,7 +142,7 @@ static TEE_Result inc_value(uint32_t param_types,
     //     DMSG("sample: %.6f\n", labels->vals[0][i]);
     // }
 	// DMSG("calculating number: %d\n", (int) ta_ln(1e-2));
-	train(10);
+	train(5);
 	// float loss = forward(features, labels);
 	// DMSG("cost: %d\n", (int) loss);
 	// backward(labels);
