@@ -110,7 +110,7 @@ static TEE_Result inc_value(uint32_t param_types,
 						   TEE_PARAM_TYPE_NONE,
 						   TEE_PARAM_TYPE_NONE);
 
-	DMSG("has been called");
+	// DMSG("has been called");
 
 	if (param_types != exp_param_types)
 		return TEE_ERROR_BAD_PARAMETERS;
@@ -141,7 +141,7 @@ static TEE_Result inc_value(uint32_t param_types,
 	// for (int i=0; i < 10; ++i) {
     //     DMSG("sample: %.6f\n", labels->vals[0][i]);
     // }
-	DMSG("calculating number: %d\n", (int) ta_ln(1e-2));
+	// DMSG("calculating number: %d\n", (int) ta_ln(1e-2));
 	train(10);
 	// float loss = forward(features, labels);
 	// DMSG("cost: %d\n", (int) loss);
@@ -161,7 +161,7 @@ static TEE_Result dec_value(uint32_t param_types,
 						   TEE_PARAM_TYPE_NONE,
 						   TEE_PARAM_TYPE_NONE);
 
-	DMSG("has been called");
+	// DMSG("has been called");
 
 	if (param_types != exp_param_types)
 		return TEE_ERROR_BAD_PARAMETERS;
@@ -175,12 +175,13 @@ static TEE_Result dec_value(uint32_t param_types,
 
 static TEE_Result send_data(uint32_t param_types, TEE_Param params[4]){
 	assert(nn != NULL);
+	TEE_AddSctrace(555);
 
 	uint32_t exp_param_types = TEE_PARAM_TYPES(TEE_PARAM_TYPE_MEMREF_INPUT,
 						   TEE_PARAM_TYPE_VALUE_INPUT,
 						   TEE_PARAM_TYPE_MEMREF_INPUT,
 						   TEE_PARAM_TYPE_VALUE_INPUT);
-	DMSG("send_data has been called");
+	// DMSG("send_data has been called");
 
 	if (param_types != exp_param_types) return TEE_ERROR_BAD_PARAMETERS;
 
@@ -212,7 +213,7 @@ static TEE_Result send_data(uint32_t param_types, TEE_Param params[4]){
 	matrix_t* wrapped_labels = wrap_data(labels, labels_size, label_rows, label_cols);
 
 	init_data(wrapped_features, wrapped_labels, nn->batch_size);
-	DMSG("send_data has finished");
+	// DMSG("send_data has finished");
 
 	TEE_AddSctrace(555);
 	return TEE_SUCCESS;

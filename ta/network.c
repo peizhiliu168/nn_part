@@ -21,7 +21,7 @@ void init_network(void) {
     int loaded_start = 0;
     int n_loaded = 1;
     float learning_rate = 0.03;
-    int batch_size = 50;
+    int batch_size = 100;
     optimizer_type_t optimizer = GD;
 
     // initialize original network
@@ -353,7 +353,7 @@ void train(int epochs) {
             destroy_matrix(batch_labels);
 
             TEE_AddSctrace(88);
-            DMSG("batch %d lofss: %d\n", b, (int) loss);
+            DMSG("batch %d loss: %d\n", b, (int) loss);
         }
         sum_loss /= (b + 1);
         matrix_t* y_hat = predict(data_loader->features);
